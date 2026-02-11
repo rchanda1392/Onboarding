@@ -1,0 +1,23 @@
+{
+  "name": "onboarding",
+  "version": "1.0.0",
+  "description": "PM Onboarding Study Plan — Core Data Observability",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rchanda1392/Onboarding.git"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@astrojs/starlight": "^0.37.6",
+    "astro": "^5.17.1",
+    "sharp": "^0.34.5"
+  }
+}

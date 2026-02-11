@@ -1,0 +1,172 @@
+---
+title: Glossary
+description: "Key terms and definitions from all study modules"
+draft: false
+---
+
+A reference guide to key terms used across all 6 study modules. Each term links back to the module where it's discussed in depth.
+
+---
+
+## A
+
+**ACID Transactions**
+Atomicity, Consistency, Isolation, Durability — a set of properties guaranteeing reliable database transactions. Delta Lake brings ACID to data lakes. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+**Agentic AI**
+AI systems that can autonomously plan, investigate, and take action — not just respond to prompts. In observability, agentic AI can detect incidents, investigate root causes, and suggest remediations with minimal human intervention. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+**Anomaly Detection**
+Using ML to automatically identify data points or patterns that deviate from expected behavior. Replaces static threshold alerting for pipeline monitoring. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+**Apache Beam**
+A unified programming model for batch and streaming data processing. Write once, run on multiple engines (Dataflow, Spark, Flink). Created at Google based on FlumeJava and MillWheel. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Apache Kafka**
+A distributed event streaming platform used for building real-time data pipelines. Acts as a high-throughput message broker between systems. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Apache Spark**
+The most widely-used distributed data processing engine. Handles batch, streaming, ML, and graph processing. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+## B
+
+**Batch Processing**
+Processing data in large groups at scheduled intervals. Suitable for high-volume analytics where latency tolerance is measured in hours, not seconds. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**BigQuery**
+Google Cloud's serverless data warehouse built on the Dremel engine. Separates storage (Colossus) from compute for petabyte-scale analytics. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+**Bigtable**
+Google's distributed database for structured data at massive scale. Powers Search, Maps, Gmail. Inspired Apache HBase and Cassandra. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+## C
+
+**CI/CD (Continuous Integration / Continuous Deployment)**
+Automated processes for building, testing, and deploying code changes. Observability can be integrated into CI/CD to catch data quality issues before production. → [Module 6](/Onboarding/module-6-developer-experience/)
+
+**Cognitive Load**
+The mental effort required to use a tool or system. A key dimension of developer experience — lower cognitive load means faster adoption. → [Module 6](/Onboarding/module-6-developer-experience/)
+
+**Colossus**
+Google's next-generation distributed file system, successor to GFS. Powers the storage layer beneath BigQuery and most Google services. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+**Concept Drift**
+When the statistical properties of a target variable change over time, making previously trained models less accurate. A key challenge for anomaly detection systems. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+**Copilot Pattern**
+An AI design pattern where the AI assists (suggests, drafts, investigates) while the human retains control and final decision-making. Exemplified by GitHub Copilot, Cursor, and Duet AI. → [Module 4](/Onboarding/module-4-ai-first-strategy/)
+
+## D
+
+**Data Freshness**
+How up-to-date the data is. One of the 5 pillars of data observability. Stale data can lead to bad decisions downstream. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Data Lakehouse**
+An architecture combining data lake flexibility (cheap storage, all file types) with data warehouse reliability (ACID, schema enforcement, fast SQL). Pioneered by Databricks. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+**Data Lineage**
+The end-to-end journey of data — where it came from, what transformations were applied, and where it goes. Essential for impact analysis and root cause investigation. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Data Observability**
+The ability to fully understand the health and state of data in your system. Defined by 5 pillars: freshness, volume, distribution, schema, lineage. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Data Pipeline**
+A series of processing steps that moves data from source systems to destinations. The core infrastructure that observability platforms monitor. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Dataflow**
+Google Cloud's fully managed service for running Apache Beam pipelines. Auto-scales and handles resource management. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**dbt (data build tool)**
+A transformation tool for data warehouses with built-in testing capabilities. dbt tests (unique, not null, relationships) run alongside transformations. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+**Delta Lake**
+Open-source storage layer that brings ACID transactions, time travel, and schema enforcement to data lakes. Foundation of Databricks Lakehouse. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+**Developer Experience (DevEx)**
+The sum of all interactions a developer has with a tool or platform. Measured across three dimensions: feedback loops, cognitive load, and flow state. → [Module 6](/Onboarding/module-6-developer-experience/)
+
+**Dremel**
+Google's internal query engine, published as a research paper in 2010. The technology that became BigQuery. Introduced columnar storage with distributed tree-based execution. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+## E
+
+**ELT (Extract, Load, Transform)**
+A data pipeline pattern where data is loaded raw into the destination and transformed in place. Enabled by cheap cloud storage and powerful query engines. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**ETL (Extract, Transform, Load)**
+A data pipeline pattern where data is transformed in a staging area before loading into the destination. Traditional approach from the era of expensive storage. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+## F
+
+**Flow State**
+A state of focused, uninterrupted work. Context-switching (leaving the IDE, navigating to other tools) disrupts flow. Good DevEx preserves flow state. → [Module 6](/Onboarding/module-6-developer-experience/)
+
+## G
+
+**GFS (Google File System)**
+Google's original distributed file system (2003). Designed for massive files on commodity hardware with built-in fault tolerance. Predecessor to Colossus. Inspired HDFS. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+**Great Expectations**
+Open-source Python framework for data validation. Define "expectations" for your data and validate against them programmatically. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+## L
+
+**Lakehouse Monitoring**
+Databricks' automated quality monitoring for tables and ML models. Tracks statistics, drift, and custom metrics over time. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+## M
+
+**MapReduce**
+Google's programming model for processing massive datasets across thousands of machines (2004 paper). Inspired the Hadoop ecosystem. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+**MTTR (Mean Time to Resolution)**
+Average time between an incident being detected and being resolved. A key metric for observability platforms — AI copilots aim to reduce MTTR. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+## N
+
+**NL2SQL (Natural Language to SQL)**
+Using LLMs to translate natural language questions into SQL queries. Enables non-technical users to query data systems and speeds up technical users. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+## O
+
+**OpenTelemetry**
+An open standard for collecting telemetry data (traces, metrics, logs) from software systems. Increasingly being adapted for data pipeline observability. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+## S
+
+**Schema Drift**
+Unexpected changes to data structure (dropped columns, type changes, new fields). One of the most common causes of pipeline failures. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Shift-Left Observability**
+Moving observability checks earlier in the development lifecycle — catching data quality issues in CI/CD before they reach production. → [Module 6](/Onboarding/module-6-developer-experience/)
+
+**SLA (Service Level Agreement)**
+A formal promise to stakeholders about service reliability. For data: "Dashboard data will be no more than 1 hour stale, 99.5% of the time." → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**SLI (Service Level Indicator)**
+The actual measurement of service reliability. For data: "Right now, dashboard data is 23 minutes stale." → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**SLO (Service Level Objective)**
+An internal target for service reliability, typically stricter than the SLA. For data: "Dashboard data will be no more than 30 minutes stale, 99.9% of the time." → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+**Soda**
+Data quality platform with open-source (Soda Core) and commercial offerings. Uses YAML-based SodaCL for defining data quality checks. → [Module 2](/Onboarding/module-2-industry-landscape/)
+
+**Spanner**
+Google's globally distributed database with external consistency. Uses GPS and atomic clocks (TrueTime) for precise time synchronization across data centers. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+**Streaming**
+Processing data continuously as it arrives, in real-time or near-real-time. Essential when data freshness is critical. → [Module 1](/Onboarding/module-1-pipelines-and-observability/)
+
+## T
+
+**Text-to-SQL**
+See NL2SQL. → [Module 5](/Onboarding/module-5-ai-observability/)
+
+**TrueTime**
+Google's globally synchronized clock system using GPS and atomic clocks. Enables Spanner's globally consistent transactions. → [Module 3](/Onboarding/module-3-google-ecosystem/)
+
+## U
+
+**Unity Catalog**
+Databricks' centralized governance layer for all data and AI assets. Provides access control, lineage tracking, and data discovery across the Lakehouse. → [Module 2](/Onboarding/module-2-industry-landscape/)
