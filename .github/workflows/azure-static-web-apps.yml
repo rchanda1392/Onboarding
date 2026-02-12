@@ -36,5 +36,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           skip_app_build: true
+          skip_deploy_on_missing_secrets: true
           app_location: dist
           output_location: ''
