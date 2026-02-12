@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "WebFetch(domain:polite-river-06e40841e.6.azurestaticapps.net)"
     ]
   }
 }

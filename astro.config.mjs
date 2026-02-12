@@ -2,9 +2,11 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import preact from '@astrojs/preact';
 
+const base = process.env.ASTRO_BASE || '/Onboarding';
+
 export default defineConfig({
-  site: 'https://rchanda1392.github.io',
-  base: '/Onboarding',
+  site: process.env.ASTRO_SITE || 'https://rchanda1392.github.io',
+  base,
   integrations: [
     preact(),
     starlight({
@@ -14,7 +16,7 @@ export default defineConfig({
       head: [
         {
           tag: 'script',
-          attrs: { type: 'module', src: '/Onboarding/chat-loader.js' },
+          attrs: { type: 'module', src: `${base === '/' ? '' : base}/chat-loader.js` },
         },
       ],
       sidebar: [

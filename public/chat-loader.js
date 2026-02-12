@@ -3,7 +3,8 @@
  * Calls Azure OpenAI GPT-4o with the full content bundle as context.
  */
 
-const BASE = '/Onboarding';
+// Detect base path: /Onboarding on GitHub Pages, / on Azure SWA
+const BASE = document.querySelector('link[rel="sitemap"]')?.href?.match(/^https?:\/\/[^/]+(\/[^/]+)?\/sitemap/)?.[1] || '';
 const CONFIG_STORAGE = 'aoai-config';
 const MAX_HISTORY = 10;
 const API_VERSION = '2024-10-21';
