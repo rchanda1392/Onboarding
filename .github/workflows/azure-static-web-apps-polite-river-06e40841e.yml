@@ -38,8 +38,7 @@ jobs:
         run: |
           cat > dist/chat-config.json << 'ENDOFCONFIG'
           {
-            "endpoint": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",
-            "deployment": "${{ secrets.AZURE_OPENAI_DEPLOYMENT }}",
+            "endpointUri": "${{ secrets.AZURE_OPENAI_ENDPOINT_URI }}",
             "apiKey": "${{ secrets.AZURE_OPENAI_KEY }}"
           }
           ENDOFCONFIG

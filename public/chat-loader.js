@@ -7,7 +7,7 @@
 const BASE = document.querySelector('link[rel="sitemap"]')?.href?.match(/^https?:\/\/[^/]+(\/[^/]+)?\/sitemap/)?.[1] || '';
 const CONFIG_STORAGE = 'aoai-config';
 const MAX_HISTORY = 10;
-const API_VERSION = '2024-10-21';
+// API_VERSION no longer needed — user provides full endpoint URI
 const PANEL_WIDTH = '420px';
 
 const SYSTEM_PROMPT = `You are a helpful study assistant for a PM onboarding program at Google's Core Data team. Answer questions based ONLY on the study module content provided below.
@@ -33,7 +33,7 @@ async function loadEmbeddedConfig() {
     const res = await fetch(`${BASE}/chat-config.json`);
     if (!res.ok) return null;
     const cfg = await res.json();
-    if (cfg.endpoint && cfg.deployment && cfg.apiKey) {
+    if (cfg.endpointUri && cfg.apiKey) {
       embeddedConfig = cfg;
       return cfg;
     }
@@ -59,7 +59,7 @@ async function* streamChat(config, userMessage, history) {
     { role: 'user', content: userMessage },
   ];
 
-  const url = `${config.endpoint.replace(/\/+$/, '')}/openai/deployments/${config.deployment}/chat/completions?api-version=${API_VERSION}`;
+  const url = config.endpointUri;
 
   const res = await fetch(url, {
     method: 'POST',
@@ -225,10 +225,8 @@ function createChatWidget() {
         </div>
         <h3>Connect to Azure OpenAI</h3>
         <p>Enter your Azure OpenAI details to start asking questions about the study modules.</p>
-        <label class="chat-label">Endpoint</label>
-        <input type="text" id="chat-endpoint" placeholder="https://your-resource.openai.azure.com" />
-        <label class="chat-label">Deployment Name</label>
-        <input type="text" id="chat-deployment" placeholder="gpt-4o" />
+        <label class="chat-label">Endpoint URI</label>
+        <input type="text" id="chat-endpoint-uri" placeholder="https://resource.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21" />
         <label class="chat-label">API Key</label>
         <input type="password" id="chat-key-input" placeholder="Your API key" />
         <button id="chat-save-key">Connect</button>
@@ -277,11 +275,10 @@ function createChatWidget() {
 
 function bindEvents() {
   document.getElementById('chat-save-key').onclick = () => {
-    const endpoint = document.getElementById('chat-endpoint').value.trim();
-    const deployment = document.getElementById('chat-deployment').value.trim();
+    const endpointUri = document.getElementById('chat-endpoint-uri').value.trim();
     const apiKey = document.getElementById('chat-key-input').value.trim();
-    if (!endpoint || !deployment || !apiKey) return;
-    localStorage.setItem(CONFIG_STORAGE, JSON.stringify({ endpoint, deployment, apiKey }));
+    if (!endpointUri || !apiKey) return;
+    localStorage.setItem(CONFIG_STORAGE, JSON.stringify({ endpointUri, apiKey }));
     showChat();
   };
   document.getElementById('chat-key-input').onkeydown = (e) => {
@@ -387,7 +384,7 @@ function injectStyles() {
       color: var(--sl-color-gray-3, #999);
       margin: 1rem 0 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;
     }
-    #chat-endpoint, #chat-deployment, #chat-key-input {
+    #chat-endpoint-uri, #chat-key-input {
       width: 100%; box-sizing: border-box;
       padding: 0.6rem 0.75rem; border-radius: 8px;
       border: 1px solid var(--sl-color-gray-5, #2a2a3d);
@@ -396,7 +393,7 @@ function injectStyles() {
       font-size: 0.85rem; outline: none;
       transition: border-color 0.15s;
     }
-    #chat-endpoint:focus, #chat-deployment:focus, #chat-key-input:focus {
+    #chat-endpoint-uri:focus, #chat-key-input:focus {
       border-color: #d97706;
     }
     #chat-save-key {
