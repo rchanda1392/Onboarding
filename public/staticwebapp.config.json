@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "route": "/Onboarding/*",
+      "rewrite": "/*"
+    },
+    {
+      "route": "/Onboarding",
+      "redirect": "/"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  }
+}
