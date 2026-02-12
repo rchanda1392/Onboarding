@@ -65,7 +65,11 @@ async function* streamChat(config, userMessage, history) {
     { type: 'message', role: 'user', content: userMessage },
   ];
 
-  const url = config.endpointUri;
+  // Ensure api-version is in the URL
+  let url = config.endpointUri;
+  if (!url.includes('api-version')) {
+    url += (url.includes('?') ? '&' : '?') + 'api-version=2024-12-01-preview';
+  }
 
   const model = 'gpt-5.2-chat';
 
