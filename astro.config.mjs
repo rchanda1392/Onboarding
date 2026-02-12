@@ -6,7 +6,7 @@ export default defineConfig({
   base: '/Onboarding',
   integrations: [
     starlight({
-      title: 'PM Onboarding: Core Data Observability',
+      title: 'Onboarding Resources',
       description: 'A study plan for Product Managers joining Google\'s Core Data team',
       sidebar: [
         { label: 'Dashboard', link: '/' },
