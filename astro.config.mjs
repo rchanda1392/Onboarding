@@ -10,9 +10,12 @@ export default defineConfig({
     starlight({
       title: 'Onboarding Resources',
       description: 'A study plan for Product Managers joining Google\'s Core Data team',
-      components: {
-        Footer: './src/overrides/Footer.astro',
-      },
+      head: [
+        {
+          tag: 'script',
+          attrs: { type: 'module', src: '/Onboarding/chat-loader.js' },
+        },
+      ],
       sidebar: [
         { label: 'Dashboard', link: '/' },
         {
