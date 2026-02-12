@@ -36,12 +36,7 @@ jobs:
 
       - name: Inject Azure OpenAI config
         run: |
-          cat > dist/chat-config.json << 'ENDOFCONFIG'
-          {
-            "endpointUri": "${{ secrets.AZURE_OPENAI_ENDPOINT_URI }}",
-            "apiKey": "${{ secrets.AZURE_OPENAI_KEY }}"
-          }
-          ENDOFCONFIG
+          echo '{"endpointUri":"${{ secrets.AZURE_OPENAI_ENDPOINT_URI }}","apiKey":"${{ secrets.AZURE_OPENAI_KEY }}"}' > dist/chat-config.json
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1

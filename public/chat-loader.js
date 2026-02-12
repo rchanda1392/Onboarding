@@ -103,7 +103,10 @@ function showChat() {
   document.getElementById('chat-messages').style.display = 'flex';
   document.getElementById('chat-composer').style.display = 'flex';
   document.getElementById('chat-btn-new').style.display = '';
-  document.getElementById('chat-btn-config').style.display = '';
+  // Only show settings gear if NOT using embedded config (i.e. GitHub Pages)
+  if (!embeddedConfig) {
+    document.getElementById('chat-btn-config').style.display = '';
+  }
 }
 
 function showSetup() {
@@ -263,9 +266,14 @@ function createChatWidget() {
   // Try loading embedded config (Azure), then fall back to localStorage (GitHub Pages)
   loadEmbeddedConfig().then((cfg) => {
     if (cfg) {
-      // Azure: auto-configure, hide setup and settings
+      // Azure: auto-configure, completely remove setup UI
       showChat();
-      document.getElementById('chat-btn-config').style.display = 'none';
+      const setup = document.getElementById('chat-setup');
+      if (setup) setup.remove();
+      const configDropdown = document.getElementById('chat-config-dropdown');
+      if (configDropdown) configDropdown.remove();
+      const configBtn = document.getElementById('chat-btn-config');
+      if (configBtn) configBtn.remove();
     } else if (getConfig()) {
       // GitHub Pages: user has saved credentials before
       showChat();
