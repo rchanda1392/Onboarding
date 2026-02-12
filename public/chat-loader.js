@@ -505,9 +505,42 @@ function injectStyles() {
   document.head.appendChild(style);
 }
 
+/* ── Move ToC into left sidebar ── */
+function relocateToc() {
+  const toc = document.querySelector('starlight-toc, .right-sidebar-panel');
+  const sidebar = document.querySelector('#starlight__sidebar .sidebar-content');
+  if (!toc || !sidebar) return;
+
+  // Extract the inner nav from the ToC
+  const tocNav = toc.querySelector('nav');
+  if (!tocNav) return;
+
+  // Create a wrapper that looks like a sidebar section
+  const wrapper = document.createElement('div');
+  wrapper.id = 'sidebar-toc';
+  wrapper.innerHTML = `<div class="sidebar-toc-label">On this page</div>`;
+
+  // Style the ToC links to match sidebar nav
+  const list = tocNav.querySelector('ul');
+  if (list) {
+    list.className = 'sidebar-toc-list';
+    wrapper.appendChild(list.cloneNode(true));
+  }
+
+  // Append to left sidebar
+  sidebar.appendChild(wrapper);
+
+  // Hide the original right-side ToC
+  toc.style.display = 'none';
+}
+
 // Mount
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', createChatWidget);
-} else {
+function init() {
   createChatWidget();
+  relocateToc();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
 }
