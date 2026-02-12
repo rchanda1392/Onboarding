@@ -1,12 +1,10 @@
 /**
- * Chat sidebar widget — Claude-inspired design.
- * Persistent right-side panel that pushes page content left when open.
+ * Chat sidebar — always-visible right panel.
  * Calls Azure OpenAI GPT-4o with the full content bundle as context.
  */
 
 const BASE = '/Onboarding';
 const CONFIG_STORAGE = 'aoai-config';
-const PANEL_STATE_STORAGE = 'chat-panel-open';
 const MAX_HISTORY = 10;
 const API_VERSION = '2024-10-21';
 const PANEL_WIDTH = '420px';
@@ -22,7 +20,6 @@ Rules:
 let contentCache = null;
 let messages = [];
 let isLoading = false;
-let panelOpen = false;
 
 function getConfig() {
   try { return JSON.parse(localStorage.getItem(CONFIG_STORAGE)); } catch { return null; }
@@ -82,25 +79,6 @@ async function* streamChat(config, userMessage, history) {
       } catch { /* skip */ }
     }
   }
-}
-
-/* ── Panel open/close ── */
-function openPanel() {
-  panelOpen = true;
-  document.getElementById('chat-sidebar').classList.add('chat-open');
-  document.getElementById('chat-toggle').classList.add('chat-toggle-hidden');
-  document.body.style.marginRight = PANEL_WIDTH;
-  localStorage.setItem(PANEL_STATE_STORAGE, '1');
-  const inp = document.getElementById('chat-input');
-  if (inp && inp.offsetParent) setTimeout(() => inp.focus(), 200);
-}
-
-function closePanel() {
-  panelOpen = false;
-  document.getElementById('chat-sidebar').classList.remove('chat-open');
-  document.getElementById('chat-toggle').classList.remove('chat-toggle-hidden');
-  document.body.style.marginRight = '0';
-  localStorage.removeItem(PANEL_STATE_STORAGE);
 }
 
 /* ── Chat state ── */
@@ -196,15 +174,9 @@ async function sendMessage() {
 
 /* ── Build DOM ── */
 function createChatWidget() {
-  // Toggle button
-  const toggle = document.createElement('button');
-  toggle.id = 'chat-toggle';
-  toggle.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
-  toggle.title = 'Open Study Assistant';
-  toggle.onclick = openPanel;
-  document.body.appendChild(toggle);
+  // Push page content left to make room for the sidebar
+  document.body.style.marginRight = PANEL_WIDTH;
 
-  // Sidebar panel
   const sidebar = document.createElement('div');
   sidebar.id = 'chat-sidebar';
   sidebar.innerHTML = `
@@ -220,9 +192,6 @@ function createChatWidget() {
         </button>
         <button id="chat-btn-config" class="chat-icon-btn" title="Settings" style="display:none">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-        <button id="chat-btn-close" class="chat-icon-btn" title="Close panel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     </div>
@@ -277,15 +246,11 @@ function createChatWidget() {
   injectStyles();
   bindEvents();
 
-  // Restore state
   const saved = getConfig();
   if (saved) showChat();
-  if (localStorage.getItem(PANEL_STATE_STORAGE)) openPanel();
 }
 
 function bindEvents() {
-  document.getElementById('chat-btn-close').onclick = closePanel;
-
   document.getElementById('chat-save-key').onclick = () => {
     const endpoint = document.getElementById('chat-endpoint').value.trim();
     const deployment = document.getElementById('chat-deployment').value.trim();
@@ -302,7 +267,6 @@ function bindEvents() {
   document.getElementById('chat-input').onkeydown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
-  // Auto-resize textarea
   document.getElementById('chat-input').oninput = (e) => {
     e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
@@ -324,20 +288,10 @@ function bindEvents() {
 function injectStyles() {
   const style = document.createElement('style');
   style.textContent = `
-    /* ── Toggle button ── */
-    #chat-toggle {
-      position: fixed; bottom: 1.25rem; right: 1.25rem;
-      width: 48px; height: 48px; border-radius: 50%;
-      background: #d97706; color: #fff;
-      border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      z-index: 10000; transition: transform 0.15s, opacity 0.15s;
-    }
-    #chat-toggle:hover { transform: scale(1.08); }
-    #chat-toggle.chat-toggle-hidden { opacity: 0; pointer-events: none; transform: scale(0.8); }
+    /* ── Page layout: make room for sidebar ── */
+    body { margin-right: ${PANEL_WIDTH}; }
 
-    /* ── Sidebar panel ── */
+    /* ── Sidebar panel: always visible ── */
     #chat-sidebar {
       position: fixed; top: 0; right: 0;
       width: ${PANEL_WIDTH}; height: 100vh;
@@ -345,12 +299,8 @@ function injectStyles() {
       border-left: 1px solid var(--sl-color-gray-5, #2a2a3d);
       display: flex; flex-direction: column;
       z-index: 9999;
-      transform: translateX(100%);
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: var(--sl-font, system-ui, -apple-system, sans-serif);
     }
-    #chat-sidebar.chat-open { transform: translateX(0); }
-    body { transition: margin-right 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 
     /* ── Header ── */
     #chat-header {
@@ -397,13 +347,8 @@ function injectStyles() {
       flex: 1; display: flex; align-items: center; justify-content: center;
       padding: 2rem 1.5rem; overflow-y: auto;
     }
-    .chat-setup-inner {
-      width: 100%; max-width: 320px;
-    }
-    .chat-setup-icon {
-      color: var(--sl-color-gray-3, #888);
-      margin-bottom: 1rem;
-    }
+    .chat-setup-inner { width: 100%; max-width: 320px; }
+    .chat-setup-icon { color: var(--sl-color-gray-3, #888); margin-bottom: 1rem; }
     .chat-setup-inner h3 {
       margin: 0 0 0.5rem; font-size: 1.1rem;
       color: var(--sl-color-white, #e2e2e2);
@@ -457,11 +402,7 @@ function injectStyles() {
     }
     .chat-welcome strong { color: var(--sl-color-white, #e2e2e2); }
 
-    /* Message rows */
-    .chat-row {
-      display: flex; gap: 0.75rem;
-      padding: 1rem 0;
-    }
+    .chat-row { display: flex; gap: 0.75rem; padding: 1rem 0; }
     .chat-row + .chat-row { border-top: 1px solid var(--sl-color-gray-6, #1e1e30); }
 
     .chat-avatar {
@@ -470,14 +411,8 @@ function injectStyles() {
       font-size: 0.65rem; font-weight: 700; flex-shrink: 0;
       text-transform: uppercase; letter-spacing: 0.02em;
     }
-    .chat-avatar-user {
-      background: var(--sl-color-gray-5, #333);
-      color: var(--sl-color-white, #e2e2e2);
-    }
-    .chat-avatar-model {
-      background: #d97706;
-      color: #fff;
-    }
+    .chat-avatar-user { background: var(--sl-color-gray-5, #333); color: var(--sl-color-white, #e2e2e2); }
+    .chat-avatar-model { background: #d97706; color: #fff; }
 
     .chat-bubble {
       flex: 1; font-size: 0.875rem; line-height: 1.65;
@@ -485,12 +420,7 @@ function injectStyles() {
       white-space: pre-wrap; word-break: break-word;
       padding-top: 0.15rem;
     }
-
-    .chat-thinking {
-      color: var(--sl-color-gray-4, #666);
-      font-style: italic;
-    }
-
+    .chat-thinking { color: var(--sl-color-gray-4, #666); font-style: italic; }
     .chat-error {
       margin: 0.5rem 0; padding: 0.6rem 0.8rem;
       font-size: 0.8rem; color: #fca5a5;
@@ -499,13 +429,15 @@ function injectStyles() {
       border-radius: 8px;
     }
 
-    /* ── Composer ── */
+    /* ── Composer: textarea takes 90% width ── */
     #chat-composer {
       flex-shrink: 0;
-      padding: 0.75rem 1rem 0.5rem;
+      padding: 0.75rem 1rem 0;
       border-top: 1px solid var(--sl-color-gray-5, #2a2a3d);
+      display: flex; flex-direction: column; align-items: center;
     }
     #chat-composer-inner {
+      width: 90%;
       display: flex; align-items: flex-end; gap: 0.5rem;
       background: var(--sl-color-gray-6, #222);
       border: 1px solid var(--sl-color-gray-5, #2a2a3d);
@@ -519,8 +451,7 @@ function injectStyles() {
       color: var(--sl-color-white, #e2e2e2);
       font-size: 0.875rem; line-height: 1.5;
       resize: none; outline: none;
-      font-family: inherit;
-      max-height: 120px;
+      font-family: inherit; max-height: 120px;
     }
     #chat-input::placeholder { color: var(--sl-color-gray-4, #666); }
 
@@ -529,8 +460,7 @@ function injectStyles() {
       background: #d97706; color: #fff;
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.15s;
+      flex-shrink: 0; transition: background 0.15s;
     }
     #chat-send-btn:hover { background: #b45309; }
     #chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -538,14 +468,13 @@ function injectStyles() {
     #chat-composer-footer {
       text-align: center; font-size: 0.65rem;
       color: var(--sl-color-gray-4, #555);
-      padding-top: 0.5rem;
+      padding: 0.5rem 0 0.6rem;
     }
 
-    /* ── Responsive: on small screens, overlay instead of push ── */
+    /* ── Responsive: on small screens, stack vertically ── */
     @media (max-width: 900px) {
-      #chat-sidebar { width: 100%; }
-      #chat-sidebar.chat-open ~ #chat-toggle { display: none; }
       body { margin-right: 0 !important; }
+      #chat-sidebar { display: none; }
     }
   `;
   document.head.appendChild(style);
