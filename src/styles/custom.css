@@ -14,3 +14,26 @@
   font-size: 1.05rem !important;
   margin-top: 0.5rem !important;
 }
+
+/* Accommodate the chat sidebar (420px) on desktop */
+@media (min-width: 901px) {
+  /* Hide the "On this page" right sidebar to prevent overlap */
+  starlight-toc {
+    display: none !important;
+  }
+
+  /* Let main content use the full width between nav sidebar and chat */
+  .main-pane {
+    max-width: 100% !important;
+  }
+
+  /* Ensure the content doesn't stretch too wide */
+  .content-panel {
+    max-width: none !important;
+  }
+
+  /* Starlight's main grid: remove the right column reserved for ToC */
+  .main-frame {
+    grid-template-columns: var(--sl-sidebar-width) 1fr !important;
+  }
+}
