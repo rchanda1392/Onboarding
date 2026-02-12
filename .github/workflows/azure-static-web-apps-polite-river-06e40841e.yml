@@ -34,6 +34,16 @@ jobs:
           ASTRO_BASE: /
           ASTRO_SITE: https://polite-river-06e40841e.6.azurestaticapps.net
 
+      - name: Inject Azure OpenAI config
+        run: |
+          cat > dist/chat-config.json << 'ENDOFCONFIG'
+          {
+            "endpoint": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",
+            "deployment": "${{ secrets.AZURE_OPENAI_DEPLOYMENT }}",
+            "apiKey": "${{ secrets.AZURE_OPENAI_KEY }}"
+          }
+          ENDOFCONFIG
+
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:

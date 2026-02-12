@@ -21,9 +21,24 @@ Rules:
 let contentCache = null;
 let messages = [];
 let isLoading = false;
+let embeddedConfig = null; // Loaded from chat-config.json on Azure
 
 function getConfig() {
+  if (embeddedConfig) return embeddedConfig;
   try { return JSON.parse(localStorage.getItem(CONFIG_STORAGE)); } catch { return null; }
+}
+
+async function loadEmbeddedConfig() {
+  try {
+    const res = await fetch(`${BASE}/chat-config.json`);
+    if (!res.ok) return null;
+    const cfg = await res.json();
+    if (cfg.endpoint && cfg.deployment && cfg.apiKey) {
+      embeddedConfig = cfg;
+      return cfg;
+    }
+  } catch { /* no config file — show setup form */ }
+  return null;
 }
 
 async function loadContent() {
@@ -247,8 +262,17 @@ function createChatWidget() {
   injectStyles();
   bindEvents();
 
-  const saved = getConfig();
-  if (saved) showChat();
+  // Try loading embedded config (Azure), then fall back to localStorage (GitHub Pages)
+  loadEmbeddedConfig().then((cfg) => {
+    if (cfg) {
+      // Azure: auto-configure, hide setup and settings
+      showChat();
+      document.getElementById('chat-btn-config').style.display = 'none';
+    } else if (getConfig()) {
+      // GitHub Pages: user has saved credentials before
+      showChat();
+    }
+  });
 }
 
 function bindEvents() {
