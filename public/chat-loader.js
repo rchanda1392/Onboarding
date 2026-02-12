@@ -53,10 +53,16 @@ async function loadContent() {
 
 async function* streamChat(config, userMessage, history) {
   const content = await loadContent();
-  const apiMessages = [
-    { role: 'system', content: `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---` },
-    ...history.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
-    { role: 'user', content: userMessage },
+  const systemInstruction = `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---`;
+
+  // Build conversation input for the Responses API
+  const input = [
+    ...history.map(m => ({
+      type: 'message',
+      role: m.role === 'model' ? 'assistant' : 'user',
+      content: m.text,
+    })),
+    { type: 'message', role: 'user', content: userMessage },
   ];
 
   const url = config.endpointUri;
@@ -64,7 +70,11 @@ async function* streamChat(config, userMessage, history) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': config.apiKey },
-    body: JSON.stringify({ messages: apiMessages, stream: true }),
+    body: JSON.stringify({
+      input,
+      instructions: systemInstruction,
+      stream: true,
+    }),
   });
 
   if (!res.ok) {
@@ -90,6 +100,15 @@ async function* streamChat(config, userMessage, history) {
       if (!data || data === '[DONE]') continue;
       try {
         const parsed = JSON.parse(data);
+        // Responses API format
+        const delta = parsed?.delta;
+        if (delta) { yield delta; continue; }
+        // Also check for output_text delta event type
+        if (parsed?.type === 'response.output_text.delta' && parsed?.delta) {
+          yield parsed.delta;
+          continue;
+        }
+        // Fallback: Chat Completions format
         const text = parsed?.choices?.[0]?.delta?.content;
         if (text) yield text;
       } catch { /* skip */ }
