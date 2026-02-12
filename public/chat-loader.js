@@ -67,10 +67,15 @@ async function* streamChat(config, userMessage, history) {
 
   const url = config.endpointUri;
 
+  // Extract model/deployment name from URI path (e.g., /deployments/gpt-52/)
+  const modelMatch = url.match(/\/deployments\/([^/]+)/);
+  const model = modelMatch ? modelMatch[1] : undefined;
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': config.apiKey },
     body: JSON.stringify({
+      ...(model && { model }),
       input,
       instructions: systemInstruction,
       stream: true,
