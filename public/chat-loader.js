@@ -67,9 +67,7 @@ async function* streamChat(config, userMessage, history) {
 
   const url = config.endpointUri;
 
-  // Extract model/deployment name from URI path (e.g., /deployments/gpt-52/)
-  const modelMatch = url.match(/\/deployments\/([^/]+)/);
-  const model = modelMatch ? modelMatch[1] : undefined;
+  const model = 'gpt-5.2-chat';
 
   const res = await fetch(url, {
     method: 'POST',
