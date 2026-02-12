@@ -1,14 +1,13 @@
 /**
  * Self-contained chat widget for the Onboarding Resources site.
  * Loaded via <script type="module"> on every page.
- * Calls the Gemini API client-side with the full content bundle as context.
+ * Calls Azure OpenAI GPT-4o with the full content bundle as context.
  */
 
 const BASE = '/Onboarding';
-const GEMINI_MODEL = 'gemini-2.0-flash';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent`;
-const API_KEY_STORAGE = 'gemini-api-key';
+const CONFIG_STORAGE = 'aoai-config';
 const MAX_HISTORY = 10;
+const API_VERSION = '2024-10-21';
 
 const SYSTEM_PROMPT = `You are a helpful study assistant for a PM onboarding program at Google's Core Data team. Answer questions based ONLY on the study module content provided below.
 
@@ -22,6 +21,10 @@ let contentCache = null;
 let messages = [];
 let isLoading = false;
 
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_STORAGE)); } catch { return null; }
+}
+
 async function loadContent() {
   if (contentCache) return contentCache;
   const res = await fetch(`${BASE}/content-bundle.json`);
@@ -32,27 +35,35 @@ async function loadContent() {
   return contentCache;
 }
 
-async function* streamChat(apiKey, userMessage, history) {
+async function* streamChat(config, userMessage, history) {
   const content = await loadContent();
 
-  const contents = [
-    { role: 'user', parts: [{ text: `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---` }] },
-    { role: 'model', parts: [{ text: "I've read all the study module content. What would you like to know?" }] },
-    ...history.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
-    { role: 'user', parts: [{ text: userMessage }] },
+  const apiMessages = [
+    { role: 'system', content: `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---` },
+    ...history.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
+    { role: 'user', content: userMessage },
   ];
 
-  const res = await fetch(`${API_URL}?alt=sse&key=${apiKey}`, {
+  const url = `${config.endpoint.replace(/\/+$/, '')}/openai/deployments/${config.deployment}/chat/completions?api-version=${API_VERSION}`;
+
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents }),
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': config.apiKey,
+    },
+    body: JSON.stringify({
+      messages: apiMessages,
+      stream: true,
+    }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    if (res.status === 400 && err.includes('API_KEY_INVALID')) throw new Error('Invalid API key. Check your key in settings.');
-    if (res.status === 429) throw new Error('Rate limit reached. The Gemini free tier allows ~15 requests/minute. Wait a moment and try again.');
-    throw new Error(`API error (${res.status})`);
+    if (res.status === 401) throw new Error('Authentication failed. Check your API key.');
+    if (res.status === 404) throw new Error('Deployment not found. Check your endpoint and deployment name.');
+    if (res.status === 429) throw new Error('Rate limit reached. Wait a moment and try again.');
+    throw new Error(`Azure OpenAI error (${res.status}): ${err.substring(0, 200)}`);
   }
 
   const reader = res.body.getReader();
@@ -71,7 +82,7 @@ async function* streamChat(apiKey, userMessage, history) {
       if (!data || data === '[DONE]') continue;
       try {
         const parsed = JSON.parse(data);
-        const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = parsed?.choices?.[0]?.delta?.content;
         if (text) yield text;
       } catch { /* skip */ }
     }
@@ -94,13 +105,18 @@ function createChatWidget() {
         </div>
       </div>
       <div id="chat-settings-bar" style="display:none">
-        <button id="chat-clear-key">Clear API Key & Reset</button>
+        <button id="chat-clear-key">Clear Configuration & Reset</button>
       </div>
       <div id="chat-body">
         <div id="chat-setup">
-          <p>Enter your Gemini API key to chat with the study content.</p>
-          <p>Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</p>
-          <input type="password" id="chat-key-input" placeholder="Paste your API key here" />
+          <p><strong>Azure OpenAI Setup</strong></p>
+          <p>Enter your Azure OpenAI details to enable chat.</p>
+          <label class="chat-label">Endpoint</label>
+          <input type="text" id="chat-endpoint" placeholder="https://your-resource.openai.azure.com" />
+          <label class="chat-label">Deployment Name</label>
+          <input type="text" id="chat-deployment" placeholder="gpt-4o" />
+          <label class="chat-label">API Key</label>
+          <input type="password" id="chat-key-input" placeholder="Your Azure OpenAI API key" />
           <button id="chat-save-key">Save & Start Chatting</button>
         </div>
         <div id="chat-messages" style="display:none">
@@ -111,20 +127,18 @@ function createChatWidget() {
         <input type="text" id="chat-input" placeholder="Ask about the study modules..." />
         <button id="chat-send">→</button>
       </div>
-      <div id="chat-footer">Powered by Gemini</div>
+      <div id="chat-footer">Powered by Azure OpenAI</div>
     </div>
   `;
   document.body.appendChild(root);
   injectStyles();
   bindEvents();
 
-  // Check for saved key
-  const saved = localStorage.getItem(API_KEY_STORAGE);
-  if (saved) showChat(saved);
+  const saved = getConfig();
+  if (saved) showChat();
 }
 
-function showChat(key) {
-  localStorage.setItem(API_KEY_STORAGE, key);
+function showChat() {
   document.getElementById('chat-setup').style.display = 'none';
   document.getElementById('chat-messages').style.display = 'flex';
   document.getElementById('chat-input-bar').style.display = 'flex';
@@ -133,7 +147,7 @@ function showChat(key) {
 }
 
 function showSetup() {
-  localStorage.removeItem(API_KEY_STORAGE);
+  localStorage.removeItem(CONFIG_STORAGE);
   messages = [];
   document.getElementById('chat-msg-list').innerHTML = '';
   document.getElementById('chat-setup').style.display = 'block';
@@ -154,12 +168,6 @@ function addMessage(role, text) {
   return div;
 }
 
-function updateLastMessage(text) {
-  const list = document.getElementById('chat-msg-list');
-  const last = list.lastElementChild;
-  if (last) last.textContent = text || '...';
-}
-
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -175,11 +183,11 @@ async function sendMessage() {
   const botDiv = addMessage('model', '...');
 
   try {
-    const apiKey = localStorage.getItem(API_KEY_STORAGE);
+    const config = getConfig();
     const history = messages.slice(-MAX_HISTORY);
     let botText = '';
 
-    for await (const chunk of streamChat(apiKey, text, history.slice(0, -1))) {
+    for await (const chunk of streamChat(config, text, history.slice(0, -1))) {
       botText += chunk;
       botDiv.textContent = botText;
       botDiv.scrollIntoView({ behavior: 'smooth' });
@@ -189,7 +197,7 @@ async function sendMessage() {
   } catch (e) {
     botDiv.textContent = '';
     botDiv.remove();
-    messages.pop(); // remove user message from history on error
+    messages.pop();
     const errDiv = document.createElement('div');
     errDiv.className = 'chat-error';
     errDiv.textContent = e.message;
@@ -216,8 +224,12 @@ function bindEvents() {
   };
 
   document.getElementById('chat-save-key').onclick = () => {
-    const val = document.getElementById('chat-key-input').value.trim();
-    if (val) showChat(val);
+    const endpoint = document.getElementById('chat-endpoint').value.trim();
+    const deployment = document.getElementById('chat-deployment').value.trim();
+    const apiKey = document.getElementById('chat-key-input').value.trim();
+    if (!endpoint || !deployment || !apiKey) return;
+    localStorage.setItem(CONFIG_STORAGE, JSON.stringify({ endpoint, deployment, apiKey }));
+    showChat();
   };
 
   document.getElementById('chat-key-input').onkeydown = (e) => {
@@ -270,7 +282,6 @@ function injectStyles() {
       display: flex; flex-direction: column;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
       z-index: 9999; overflow: hidden;
-      transition: opacity 0.2s, transform 0.2s;
     }
     #chat-panel.chat-hidden { display: none; }
 
@@ -300,12 +311,17 @@ function injectStyles() {
     #chat-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
     #chat-setup {
-      padding: 1.5rem 1rem;
+      padding: 1.5rem 1rem; overflow-y: auto;
       color: var(--sl-color-gray-2, #aaa); font-size: 0.85rem; line-height: 1.5;
     }
     #chat-setup p { margin: 0 0 0.75rem; }
     #chat-setup a { color: var(--sl-color-accent, #6366f1); }
-    #chat-key-input, #chat-input {
+    .chat-label {
+      display: block; font-size: 0.75rem; font-weight: 600;
+      color: var(--sl-color-gray-3, #999); margin: 0.75rem 0 0.25rem;
+    }
+    .chat-label:first-of-type { margin-top: 0; }
+    #chat-endpoint, #chat-deployment, #chat-key-input, #chat-input {
       width: 100%; box-sizing: border-box;
       padding: 0.5rem 0.75rem; border-radius: 8px;
       border: 1px solid var(--sl-color-gray-5, #333);
@@ -314,7 +330,7 @@ function injectStyles() {
       font-size: 0.85rem; outline: none;
     }
     #chat-save-key {
-      margin-top: 0.75rem; width: 100%; padding: 0.5rem;
+      margin-top: 1rem; width: 100%; padding: 0.5rem;
       border-radius: 8px; border: none;
       background: var(--sl-color-accent, #6366f1);
       color: var(--sl-color-black, #fff);
