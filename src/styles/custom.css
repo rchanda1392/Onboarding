@@ -31,10 +31,19 @@
 
   .main-pane {
     max-width: 100% !important;
+    padding-right: 0 !important;
   }
 
   .content-panel {
     max-width: none !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Remove max-width on the article/prose so text fills the space */
+  .content-panel > article,
+  .sl-markdown-content {
+    max-width: none !important;
+    width: 100% !important;
   }
 
   /* Style the ToC relocated into the left sidebar */
