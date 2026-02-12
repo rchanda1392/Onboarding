@@ -61,7 +61,7 @@ async function* streamChat(config, userMessage, history) {
   if (!res.ok) {
     const err = await res.text();
     if (res.status === 401) throw new Error('Authentication failed. Check your API key.');
-    if (res.status === 404) throw new Error('Deployment not found. Check your endpoint and deployment name.');
+    if (res.status === 404) throw new Error(`Deployment not found (404). URL called: ${url.replace(config.apiKey, '***')}. Check your endpoint and deployment name.`);
     if (res.status === 429) throw new Error('Rate limit reached. Wait a moment and try again.');
     throw new Error(`Azure OpenAI error (${res.status}): ${err.substring(0, 200)}`);
   }
