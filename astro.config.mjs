@@ -8,7 +8,8 @@ export default defineConfig({
   integrations: [
     preact(),
     starlight({
-      title: 'Onboarding Resources',
+      title: 'Onboarding Guide',
+      customCss: ['./src/styles/custom.css'],
       description: 'A study plan for Product Managers joining Google\'s Core Data team',
       head: [
         {

@@ -1,0 +1,16 @@
+/* Splash hero: smaller title, shifted up, single-line tagline */
+.hero {
+  padding-top: 2rem !important;
+  padding-bottom: 1rem !important;
+}
+
+.hero h1 {
+  font-size: 2.5rem !important;
+  line-height: 1.2 !important;
+}
+
+.hero .tagline {
+  white-space: nowrap;
+  font-size: 1.05rem !important;
+  margin-top: 0.5rem !important;
+}
