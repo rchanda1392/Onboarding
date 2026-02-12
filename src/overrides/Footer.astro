@@ -1,0 +1,8 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/components/Footer.astro';
+import Chat from '../components/Chat.tsx';
+---
+
+<Default {...Astro.props}><slot /></Default>
+<Chat client:only="preact" base="/Onboarding" />

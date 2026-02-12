@@ -1,13 +1,18 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import preact from '@astrojs/preact';
 
 export default defineConfig({
   site: 'https://rchanda1392.github.io',
   base: '/Onboarding',
   integrations: [
+    preact(),
     starlight({
       title: 'Onboarding Resources',
       description: 'A study plan for Product Managers joining Google\'s Core Data team',
+      components: {
+        Footer: './src/overrides/Footer.astro',
+      },
       sidebar: [
         { label: 'Dashboard', link: '/' },
         {
