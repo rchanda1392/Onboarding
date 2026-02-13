@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "WebFetch(domain:polite-river-06e40841e.6.azurestaticapps.net)"
+      "WebFetch(domain:polite-river-06e40841e.6.azurestaticapps.net)",
+      "Bash(cmd /c:*)",
+      "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding status)",
+      "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding diff public/chat-loader.js)",
+      "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding log --oneline -5)"
     ]
   }
 }
