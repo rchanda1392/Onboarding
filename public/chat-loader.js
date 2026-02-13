@@ -10,6 +10,33 @@ const MAX_HISTORY = 10;
 // API_VERSION no longer needed — user provides full endpoint URI
 const PANEL_WIDTH = '420px';
 
+/* ── Markdown rendering dependencies (loaded lazily from CDN) ── */
+let markedParse, DOMPurifyLib;
+
+async function loadMarkdownDeps() {
+  if (markedParse && DOMPurifyLib) return;
+  try {
+    const [markedMod, purifyMod] = await Promise.all([
+      import('https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js'),
+      import('https://cdn.jsdelivr.net/npm/dompurify/dist/purify.es.mjs'),
+    ]);
+    markedParse = markedMod.marked;
+    DOMPurifyLib = purifyMod.default;
+    markedParse.setOptions({ breaks: true, gfm: true });
+  } catch { /* CDN unavailable — fall back to plain text */ }
+}
+
+function renderMarkdown(text) {
+  if (!markedParse || !DOMPurifyLib) return escapeHtml(text);
+  return DOMPurifyLib.sanitize(markedParse.parse(text));
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 const SYSTEM_PROMPT = `You are a helpful study assistant for a PM onboarding program at Google's Core Data team. Answer questions based ONLY on the study module content provided below.
 
 Rules:
@@ -160,7 +187,12 @@ function addMessage(role, text) {
 
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble chat-bubble-${role}`;
-  bubble.textContent = text;
+  if (role === 'model') {
+    bubble.classList.add('chat-md');
+    bubble.innerHTML = renderMarkdown(text);
+  } else {
+    bubble.textContent = text;
+  }
 
   row.appendChild(avatar);
   row.appendChild(bubble);
@@ -173,6 +205,8 @@ async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text || isLoading) return;
+
+  await loadMarkdownDeps();
 
   input.value = '';
   input.style.height = 'auto';
@@ -196,7 +230,7 @@ async function sendMessage() {
     for await (const chunk of streamChat(config, text, history.slice(0, -1))) {
       if (thinkingDot.parentNode) thinkingDot.remove();
       botText += chunk;
-      bubble.textContent = botText;
+      bubble.innerHTML = renderMarkdown(botText);
       bubble.parentElement.scrollIntoView({ behavior: 'smooth' });
     }
     messages.push({ role: 'model', text: botText });
@@ -477,6 +511,82 @@ function injectStyles() {
       padding-top: 0.15rem;
     }
     .chat-thinking { color: var(--sl-color-gray-4, #666); font-style: italic; }
+
+    /* ── Markdown rendering in bot messages ── */
+    .chat-bubble.chat-md { white-space: normal; }
+
+    .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
+      color: var(--sl-color-white, #e2e2e2);
+      margin: 0.75rem 0 0.35rem; line-height: 1.3;
+    }
+    .chat-md h1 { font-size: 1.1rem; }
+    .chat-md h2 { font-size: 1rem; }
+    .chat-md h3 { font-size: 0.925rem; }
+    .chat-md h4 { font-size: 0.875rem; }
+    .chat-md h1:first-child, .chat-md h2:first-child,
+    .chat-md h3:first-child, .chat-md h4:first-child { margin-top: 0; }
+
+    .chat-md p { margin: 0.4rem 0; line-height: 1.65; }
+    .chat-md p:first-child { margin-top: 0; }
+    .chat-md p:last-child  { margin-bottom: 0; }
+
+    .chat-md strong { color: var(--sl-color-white, #fff); font-weight: 600; }
+    .chat-md em { font-style: italic; }
+
+    .chat-md ul, .chat-md ol { margin: 0.4rem 0; padding-left: 1.4rem; }
+    .chat-md li { margin: 0.2rem 0; line-height: 1.55; }
+    .chat-md li > p { margin: 0.15rem 0; }
+
+    .chat-md code {
+      background: var(--sl-color-gray-6, #2a2a3d);
+      padding: 0.15rem 0.4rem; border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+    }
+    .chat-md pre {
+      background: var(--sl-color-gray-6, #1a1a2e);
+      border: 1px solid var(--sl-color-gray-5, #2a2a3d);
+      border-radius: 8px; padding: 0.75rem 1rem;
+      margin: 0.5rem 0; overflow-x: auto;
+      font-size: 0.8rem; line-height: 1.5;
+    }
+    .chat-md pre code {
+      background: none; padding: 0; border-radius: 0; font-size: inherit;
+    }
+
+    .chat-md table {
+      width: 100%; border-collapse: collapse;
+      margin: 0.5rem 0; font-size: 0.8rem;
+    }
+    .chat-md th {
+      background: var(--sl-color-gray-6, #2a2a3d);
+      color: var(--sl-color-white, #e2e2e2);
+      font-weight: 600; text-align: left;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--sl-color-gray-5, #333);
+    }
+    .chat-md td {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--sl-color-gray-5, #333);
+      color: var(--sl-color-gray-2, #ccc);
+    }
+    .chat-md tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+    .chat-md blockquote {
+      border-left: 3px solid #d97706;
+      margin: 0.5rem 0; padding: 0.3rem 0 0.3rem 0.8rem;
+      color: var(--sl-color-gray-2, #bbb);
+    }
+    .chat-md blockquote p { margin: 0.2rem 0; }
+
+    .chat-md hr {
+      border: none; border-top: 1px solid var(--sl-color-gray-5, #2a2a3d);
+      margin: 0.75rem 0;
+    }
+
+    .chat-md a { color: #d97706; text-decoration: underline; text-underline-offset: 2px; }
+    .chat-md a:hover { color: #f59e0b; }
+
     .chat-error {
       margin: 0.5rem 0; padding: 0.6rem 0.8rem;
       font-size: 0.8rem; color: #fca5a5;
