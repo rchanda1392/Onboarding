@@ -13,9 +13,10 @@ We built a **static documentation website** that serves as a 14.5-hour study pla
 - A **glossary** of 50+ key terms
 - **Built-in search** (powered by Pagefind) across all content
 - **Dark mode**, responsive design, and sidebar navigation — all for free
+- **AI-powered chat sidebar** — ask questions about any module content and get cited answers
 - **Auto-deploy** to GitHub Pages on every push to `main`
 
-The whole thing runs on zero backend infrastructure. It's pure static HTML — no database, no server, no API, no auth. Just files served from GitHub's CDN.
+The whole thing runs on zero backend infrastructure. It's pure static HTML — no database, no server, no auth. The chat feature makes client-side API calls directly to Azure OpenAI, so even that doesn't need a backend.
 
 ---
 
@@ -233,6 +234,56 @@ Adding this module as Module 4 (between Google Ecosystem and AI Strategy) requir
 
 ---
 
+## The Chat Sidebar: AI-Powered Q&A Without a Backend
+
+The most technically interesting addition to the site is the **Study Assistant** — a chat sidebar on every page that lets you ask questions about the study content and get answers powered by Azure OpenAI GPT-5.2.
+
+### The Problem It Solves
+
+You've got 14.5 hours of study material across 7 modules. Sometimes you want to quickly check "did any module cover feature stores?" or "what's the difference between batch and streaming pipelines?" without scanning through every page. The chat lets you ask in natural language and get a cited answer pointing you to the right module.
+
+### How It Works (The Clever Bit)
+
+Here's the trick: this is a **static site** on GitHub Pages. No backend. No server. So how does the chat work?
+
+```
+Build time:  MDX files → extract-content.mjs → content-bundle.json
+Runtime:     User question + content-bundle.json → Azure OpenAI API → Streamed answer
+```
+
+1. **At build time**, a script (`scripts/extract-content.mjs`) reads every MDX file, strips out the frontmatter and component syntax, and saves the plain text as `public/content-bundle.json`. This runs automatically before every build via the `prebuild` npm script.
+
+2. **At runtime**, when you ask a question, the chat loads `content-bundle.json` (once, then cached), stuffs the entire content into the system prompt, and sends your question to Azure OpenAI. The total content is about 15K tokens — well within GPT-5.2's context window — so we don't need a fancy RAG pipeline with embeddings and vector search. We just send everything.
+
+3. **The response streams back** token-by-token, so you see the answer being typed out in real time rather than waiting for the full response.
+
+### Why Vanilla JS Instead of a Framework Component?
+
+The original plan was to build the chat as a Preact component (Astro's "island architecture" for interactive widgets). We pivoted to a single vanilla JavaScript file (`public/chat-loader.js`) for a few reasons:
+
+- **Simplicity**: One self-contained file, no build step for the chat itself. It's injected via a `<script>` tag in Starlight's head config.
+- **DOM manipulation**: The chat is mostly creating DOM elements and handling events — exactly what vanilla JS is good at. A framework adds overhead without proportional benefit for this kind of widget.
+- **Deployment flexibility**: The same file works on GitHub Pages and Azure Static Web Apps without changes.
+
+**The analogy**: If the Astro/Starlight site is a well-organized kitchen with designated stations, the chat sidebar is like a food truck parked next to it. It does its own thing, serves from its own counter, but complements the main restaurant.
+
+### The Dual-Config Pattern
+
+The chat supports two hosting environments with a neat configuration pattern:
+
+- **GitHub Pages** (public): Users provide their own Azure OpenAI endpoint URI and API key. It's stored in `localStorage` so they only enter it once. A settings gear lets them reset it.
+- **Azure Static Web Apps** (internal): A `chat-config.json` file is deployed alongside the site with pre-configured credentials. The setup screen never appears — the chat just works.
+
+The code checks for `chat-config.json` first (Azure), then falls back to `localStorage` (GitHub Pages). This means the same codebase serves both audiences without any if-else branching in the deployment pipeline.
+
+### Markdown Rendering in Chat
+
+Bot responses come back as raw text from the API, but they contain markdown formatting (bold, lists, code blocks, tables). We lazy-load two libraries from CDN — **marked.js** (markdown parser) and **DOMPurify** (HTML sanitizer) — to render responses as nicely formatted HTML. The DOMPurify step is a security best practice: even though we control the system prompt, the AI's output could theoretically include HTML that we don't want injected into the page.
+
+**The engineering lesson**: Always sanitize HTML that comes from an external source, even if that source is an AI you control. This is the same principle as SQL injection prevention — don't trust inputs, even "friendly" ones.
+
+---
+
 ## How to Update Content
 
 ### Adding or editing a module:
@@ -289,7 +340,9 @@ If this were a production project at Google, the next steps would be:
 3. **Add a CI check** — Verify the build produces the expected number of pages (catching the `draft: false` bug automatically)
 4. **Collect feedback** — Add a "Was this helpful?" mechanism to each module
 5. **Update quarterly** — Resources go stale; new tools and frameworks emerge. Schedule quarterly content reviews.
+6. **Chat analytics** — Track which questions users ask most to identify content gaps
+7. **Chat conversation persistence** — Currently history resets on page refresh. Could persist in localStorage for continuity.
 
 ---
 
-*This document was written as part of the build process. It covers the project from conception through deployment, including the bugs, the decisions, and the lessons. If something about the project confuses you, this is the place to start.*
+*This document was written as part of the build process and updated as features were added. It covers the project from conception through deployment, including the bugs, the decisions, and the lessons. If something about the project confuses you, this is the place to start.*

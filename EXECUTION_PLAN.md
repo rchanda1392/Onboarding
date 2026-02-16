@@ -1,179 +1,241 @@
-# Execution Plan: Chat Interface for Onboarding Site
+# Execution Plan: Playwright E2E Testing Loop
 
-**Created**: 2026-02-12
-**Last Updated**: 2026-02-12
+**Created**: 2026-02-16
+**Last Updated**: 2026-02-16
 **Status**: Not Started
 
 ## Overview
 
-Add a Q&A chat interface to the static Onboarding Resources site. Users can ask questions about the module content in natural language and get answers powered by the Gemini API. The site stays on GitHub Pages (no backend). All module content is bundled at build time and sent as context to Gemini with each question.
+Add end-to-end testing with Playwright that verifies all 9 pages render correctly, navigation works, interactive elements (sidebar, search, chat widget) function, and the site builds without errors. The test suite runs against the **live Azure SWA deployment** (`https://polite-river-06e40841e.6.azurestaticapps.net`) and includes **visual regression screenshots** to catch unintended UI changes.
 
 ## Architecture Reference
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the base site design.
-
-### Chat Feature Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│  Browser (Client-Side Only)                      │
-│                                                   │
-│  ┌─────────────────────────────────────────┐     │
-│  │  Chat UI (Preact Island)                 │     │
-│  │  - Floating chat button (bottom-right)   │     │
-│  │  - Expandable chat panel                 │     │
-│  │  - Message history                       │     │
-│  │  - API key input (first use)             │     │
-│  └──────────────┬──────────────────────────┘     │
-│                  │                                 │
-│  ┌──────────────▼──────────────────────────┐     │
-│  │  Content Bundle (built at build time)    │     │
-│  │  - All module text as JSON               │     │
-│  │  - ~15K tokens total                     │     │
-│  └──────────────┬──────────────────────────┘     │
-│                  │                                 │
-│  ┌──────────────▼──────────────────────────┐     │
-│  │  Gemini API Call (client-side fetch)     │     │
-│  │  - System prompt + full content context  │     │
-│  │  - User question                         │     │
-│  │  - Streaming response                    │     │
-│  └─────────────────────────────────────────┘     │
-│                                                   │
-│  API key stored in localStorage (user-provided)   │
-└─────────────────────────────────────────────────┘
-```
+No `ARCHITECTURE.md` for testing — this plan is derived from codebase exploration of the Astro + Starlight site (9 pages, chat sidebar, Starlight navigation/search).
 
 ---
 
 ## Phases
 
-### Phase 1: Content Extraction Pipeline
+### Phase 1: Scaffold Playwright Infrastructure
 **Status**: ⬜ Not Started
 **Prerequisites**: None
 **Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 1.1**: Create a build script that extracts text from all MDX files
-  - **Files**: `scripts/extract-content.mjs`
-  - **Details**: Read all MDX files under `src/content/docs/`, strip frontmatter and MDX components, extract plain text with section headings. Output as `public/content-bundle.json` with structure: `[{ module, title, sections: [{ heading, text }] }]`
-  - **Success Criteria**: JSON file contains all module text, is loadable via fetch, < 100KB
+- [ ] **Task 1.1**: Install Playwright as a dev dependency
+  - **Details**: `npm i -D @playwright/test` then `npx playwright install --with-deps chromium` (Chromium only to keep it fast)
+  - **Success Criteria**: `npx playwright --version` succeeds
 
-- [ ] **Task 1.2**: Integrate extraction into the build pipeline
+- [ ] **Task 1.2**: Create `playwright.config.ts`
+  - **Files**: `playwright.config.ts`
+  - **Details**: Configure:
+    - `baseURL`: `https://polite-river-06e40841e.6.azurestaticapps.net` (live Azure SWA)
+    - No `webServer` needed — tests run against the live deployment
+    - `projects`: Chromium only (lightweight)
+    - `retries`: 1 on CI, 0 locally
+    - `outputDir`: `test-results/`
+    - `expect.toHaveScreenshot`: configure with `maxDiffPixelRatio: 0.01` for visual regression tolerance
+    - `snapshotPathTemplate`: `{testDir}/__screenshots__/{testFilePath}/{arg}{ext}` for organized baseline storage
+  - **Success Criteria**: Config file exists and Playwright recognizes it
+
+- [ ] **Task 1.3**: Add npm scripts for testing
   - **Files**: `package.json`
-  - **Details**: Add a `prebuild` script that runs the extraction before `astro build`
-  - **Success Criteria**: `npm run build` produces both the site and the content bundle
+  - **Details**: Add `"test": "playwright test"` and `"test:ui": "playwright test --ui"`
+  - **Success Criteria**: `npm test` invokes Playwright
+
+- [ ] **Task 1.4**: Update `.gitignore` for test artifacts
+  - **Files**: `.gitignore`
+  - **Details**: Add `test-results/`, `playwright-report/`, `blob-report/`. Do NOT ignore `tests/__screenshots__/` — baseline screenshots must be committed to git.
+  - **Success Criteria**: Test artifacts excluded from git, but screenshot baselines tracked
 
 #### Checkpoint
-- [ ] `public/content-bundle.json` exists with all module content
-- [ ] Build pipeline runs extraction automatically
-- [ ] Ready for Phase 2
+- [ ] `npm test` runs Playwright (even with no tests yet)
+- [ ] No changes to existing site functionality
 
 ---
 
-### Phase 2: Chat UI Component
+### Phase 2: Smoke Loop — Every Page Renders
 **Status**: ⬜ Not Started
-**Prerequisites**: Phase 1 complete
+**Prerequisites**: Phase 1
+**Estimated Scope**: Medium
+
+This is the core "testing loop" — a data-driven test that iterates over every route.
+
+#### Tasks
+- [ ] **Task 2.1**: Create data-driven smoke test for all 9 pages
+  - **Files**: `tests/smoke.spec.ts`
+  - **Details**: Define a routes array, then loop with `test.describe` / `for...of`:
+    ```ts
+    const pages = [
+      { path: '/', title: 'Onboarding Guide' },
+      { path: '/module-1-pipelines-and-observability/', title: 'Data Pipelines' },
+      { path: '/module-2-industry-landscape/', title: 'Industry Landscape' },
+      { path: '/module-3-google-ecosystem/', title: 'Google' },
+      { path: '/module-4-ml-ai-infrastructure/', title: 'ML/AI' },
+      { path: '/module-5-ai-first-strategy/', title: 'AI-First' },
+      { path: '/module-6-ai-observability/', title: 'Observability' },
+      { path: '/module-7-developer-experience/', title: 'Developer Experience' },
+      { path: '/glossary/', title: 'Glossary' },
+    ];
+    for (const pg of pages) {
+      test(`${pg.path} loads and renders`, ...);
+    }
+    ```
+    For each page: navigate, assert `<main>` visible, assert title contains expected substring.
+  - **Success Criteria**: All 9 pages return 200 and render `<main>`
+
+- [ ] **Task 2.2**: Assert no console errors on any page
+  - **Files**: `tests/smoke.spec.ts` (extend)
+  - **Details**: Attach `page.on('console')` listener, collect `error`-level entries, assert zero per page
+  - **Success Criteria**: Zero unexpected console errors across all pages
+
+#### Checkpoint
+- [ ] `npm test` passes with 9+ green tests
+- [ ] Every page confirmed renderable in headless Chromium
+
+---
+
+### Phase 3: Navigation & Sidebar Tests
+**Status**: ⬜ Not Started
+**Prerequisites**: Phase 2
 **Estimated Scope**: Medium
 
 #### Tasks
-- [ ] **Task 2.1**: Install Preact and configure Astro for interactive islands
-  - **Files**: `package.json`, `astro.config.mjs`
-  - **Details**: Install `@astrojs/preact` and `preact`. Add Preact integration to Astro config.
-  - **Success Criteria**: Preact components render in Astro pages
+- [ ] **Task 3.1**: Test sidebar navigation links
+  - **Files**: `tests/navigation.spec.ts`
+  - **Details**: Start on Dashboard → click each sidebar "Study Modules" link → assert URL changes → assert `<h1>` matches module title
+  - **Success Criteria**: All 7 module links navigate correctly
 
-- [ ] **Task 2.2**: Build the chat panel UI component
-  - **Files**: `src/components/Chat.tsx`
-  - **Details**: Create a Preact component with:
-    - Floating chat button (bottom-right corner, fixed position)
-    - Expandable chat panel (slide up on click)
-    - Message list (user messages right-aligned, bot messages left-aligned)
-    - Text input with send button
-    - "Powered by Gemini" footer
-    - Close/minimize button
-    - Responsive design (works on mobile)
-  - **Success Criteria**: Chat UI opens/closes, messages display, input works
+- [ ] **Task 3.2**: Test Dashboard card links
+  - **Files**: `tests/navigation.spec.ts`
+  - **Details**: On Dashboard, click CardGrid links + "Start with Module 1" hero button → verify correct destination
+  - **Success Criteria**: All dashboard cards route correctly
 
-- [ ] **Task 2.3**: Build the API key setup flow
-  - **Files**: `src/components/Chat.tsx`
-  - **Details**: On first use (no key in localStorage), show a setup screen inside the chat panel:
-    - Brief explanation: "Enter your Gemini API key to enable chat"
-    - Link to Google AI Studio to get a free key
-    - Text input for the key
-    - "Save" button that stores key in localStorage
-    - "Clear key" option in chat settings
-  - **Success Criteria**: Key is persisted across sessions, chat works after key entry
-
-- [ ] **Task 2.4**: Add the chat component to the site layout
-  - **Files**: `src/content/docs/index.mdx` (and potentially a custom Starlight layout override)
-  - **Details**: Add the Chat island to all pages. Starlight supports custom components via head/body slots or layout overrides.
-  - **Success Criteria**: Chat button appears on every page of the site
+- [ ] **Task 3.3**: Test Starlight search
+  - **Files**: `tests/navigation.spec.ts`
+  - **Details**: Open search (`Ctrl+K`), type "pipeline", assert results appear, click a result → verify navigation
+  - **Success Criteria**: Search works end-to-end
 
 #### Checkpoint
-- [ ] Chat UI renders on all pages
-- [ ] Chat opens/closes cleanly
-- [ ] API key flow works
-- [ ] Ready for Phase 3
+- [ ] All navigation paths verified
+- [ ] Site fully navigable via sidebar, cards, and search
 
 ---
 
-### Phase 3: Gemini API Integration
+### Phase 4: Chat Widget Tests
 **Status**: ⬜ Not Started
-**Prerequisites**: Phase 2 complete
+**Prerequisites**: Phase 2
 **Estimated Scope**: Medium
 
 #### Tasks
-- [ ] **Task 3.1**: Implement the Gemini API client
-  - **Files**: `src/lib/gemini.ts`
-  - **Details**: Create a module that:
-    - Loads the content bundle from `/content-bundle.json`
-    - Constructs a system prompt: "You are a helpful study assistant for a PM onboarding program. Answer questions based ONLY on the following content. Cite the module name when referencing information. If the answer isn't in the content, say so."
-    - Calls the Gemini API (`gemini-2.0-flash`) with streaming via the REST API (no SDK needed — just fetch)
-    - Returns a streaming response to the chat UI
-  - **Success Criteria**: Correct answers returned for questions about module content
+- [ ] **Task 4.1**: Test chat widget renders on every page
+  - **Files**: `tests/chat.spec.ts`
+  - **Details**: Visit each page → assert chat container is visible → assert setup screen appears (no stored credentials in test browser)
+  - **Success Criteria**: Chat widget DOM present on all 9 pages
 
-- [ ] **Task 3.2**: Wire the Gemini client to the chat UI
-  - **Files**: `src/components/Chat.tsx`, `src/lib/gemini.ts`
-  - **Details**: Connect the send button to the Gemini client. Show a loading indicator while waiting. Stream the response token-by-token into the chat panel. Handle errors gracefully (invalid key, rate limit, network error).
-  - **Success Criteria**: End-to-end Q&A works: ask a question → get a cited answer from the module content
+- [ ] **Task 4.2**: Test chat setup form interaction
+  - **Files**: `tests/chat.spec.ts`
+  - **Details**: Fill endpoint URI + API key with dummy values → submit → assert transition from setup to chat interface → assert composer textarea visible
+  - **Success Criteria**: Setup form works and transitions to chat view
 
-- [ ] **Task 3.3**: Add conversation history support (session-only)
-  - **Files**: `src/components/Chat.tsx`, `src/lib/gemini.ts`
-  - **Details**: Maintain conversation history in Preact component state (last 10 messages). Send history with each request so Gemini has context for follow-up questions. History resets on page refresh or tab close — no persistence needed. Add a "New Chat" button to clear history within a session.
-  - **Success Criteria**: Follow-up questions work within a session; history resets on refresh
+- [ ] **Task 4.3**: Test chat send + error handling (no real API)
+  - **Files**: `tests/chat.spec.ts`
+  - **Details**: After dummy setup, type message → send → assert user message appears → assert graceful error (API fails with dummy creds, should show error message not crash)
+  - **Success Criteria**: Chat handles failed API calls gracefully
 
 #### Checkpoint
-- [ ] Chat answers questions accurately from module content
-- [ ] Streaming responses work
-- [ ] Conversation context is maintained
-- [ ] Error handling works (bad key, network issues)
-- [ ] Ready for Phase 4
+- [ ] Chat widget verified on all pages
+- [ ] Chat UI tested: setup → compose → send → error handling
 
 ---
 
-### Phase 4: Polish & Deploy
+### Phase 5: Content Integrity Tests
 **Status**: ⬜ Not Started
-**Prerequisites**: Phase 3 complete
+**Prerequisites**: Phase 2
 **Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 4.1**: Style the chat to match the Starlight theme
-  - **Files**: `src/components/Chat.tsx`
-  - **Details**: Match colors/fonts to Starlight's dark and light mode. Use CSS variables from Starlight's theme. Ensure the chat panel doesn't overlap with sidebar or content.
-  - **Success Criteria**: Chat looks native to the site in both light and dark mode
+- [ ] **Task 5.1**: Verify each module has expected structural elements
+  - **Files**: `tests/content.spec.ts`
+  - **Details**: For each module: assert `<h1>` exists, "About This Module" heading exists, at least one content section
+  - **Success Criteria**: All modules have key structural elements
 
-- [ ] **Task 4.2**: Build verification
-  - **Details**: Run `npm run build`, verify all pages still build (9 pages), chat component loads, content bundle is generated.
-  - **Success Criteria**: Clean build, no errors
+- [ ] **Task 5.2**: Verify glossary has alphabetical sections
+  - **Files**: `tests/content.spec.ts`
+  - **Details**: Visit `/glossary/` → assert multiple `<h2>` letter headings → assert 10+ terms present
+  - **Success Criteria**: Glossary renders correctly
 
-- [ ] **Task 4.3**: Commit and deploy
-  - **Details**: Commit all changes, push to main, verify GitHub Actions deploys successfully and chat works on the live site.
-  - **Success Criteria**: Chat is live at https://rchanda1392.github.io/Onboarding/
+- [ ] **Task 5.3**: Verify content-bundle.json is accessible and valid
+  - **Files**: `tests/content.spec.ts`
+  - **Details**: Fetch `/content-bundle.json` → assert 200 → assert valid JSON → assert entries for all 7 modules
+  - **Success Criteria**: Chat's content bundle is complete
 
 #### Checkpoint
-- [ ] Chat works on live site
-- [ ] Dark/light mode support
-- [ ] All existing pages still work
-- [ ] ForRajdeep.md updated with chat feature details
+- [ ] Content structure validated across all modules and glossary
+- [ ] Content bundle verified for chat feature
+
+---
+
+### Phase 6: Visual Regression Screenshots
+**Status**: ⬜ Not Started
+**Prerequisites**: Phase 2
+**Estimated Scope**: Medium
+
+#### Tasks
+- [ ] **Task 6.1**: Add full-page screenshot baselines for all 9 pages
+  - **Files**: `tests/visual.spec.ts`
+  - **Details**: Data-driven test (same routes array as smoke). For each page:
+    1. Navigate and wait for `networkidle` (ensures CDN assets like marked.js load)
+    2. Hide dynamic elements that cause flaky diffs (e.g., chat widget cursor blink) via `page.addStyleRule` or mask option
+    3. `await expect(page).toHaveScreenshot('page-name.png', { fullPage: true })`
+    4. First run with `--update-snapshots` to generate baselines
+  - **Success Criteria**: Baseline screenshots generated and committed for all 9 pages
+
+- [ ] **Task 6.2**: Add component-level screenshot tests for key UI elements
+  - **Files**: `tests/visual.spec.ts`
+  - **Details**: Targeted screenshots of:
+    - Dashboard hero section (`.hero` locator)
+    - Dashboard CardGrid (module cards)
+    - Sidebar navigation panel
+    - Chat widget setup screen
+    - Chat widget after dummy login (chat interface)
+  - **Success Criteria**: Component baselines generated for 5 key UI areas
+
+- [ ] **Task 6.3**: Document the visual regression workflow
+  - **Files**: `tests/README.md`
+  - **Details**: Short doc explaining:
+    - How to update baselines: `npx playwright test --update-snapshots`
+    - When to update: after intentional UI changes
+    - How to review diffs: `npx playwright show-report`
+    - Tolerance config (`maxDiffPixelRatio: 0.01`)
+  - **Success Criteria**: Any team member can understand the screenshot workflow
+
+#### Checkpoint
+- [ ] All 9 pages have full-page baseline screenshots committed
+- [ ] 5 component-level baselines committed
+- [ ] `npm test` catches visual regressions (modify CSS → test fails)
+
+---
+
+### Phase 7: CI Integration
+**Status**: ⬜ Not Started
+**Prerequisites**: Phase 6
+**Estimated Scope**: Small
+
+#### Tasks
+- [ ] **Task 7.1**: Add Playwright GitHub Actions workflow
+  - **Files**: `.github/workflows/test.yml`
+  - **Details**: Trigger on PR + push to main → Node 20 → `npm ci` → `npx playwright install --with-deps chromium` → `npm test` → upload `playwright-report/` as artifact (always, so visual diffs are reviewable)
+  - **Success Criteria**: Tests run automatically on PRs
+
+- [ ] **Task 7.2**: Handle screenshot baseline updates in CI
+  - **Files**: `.github/workflows/test.yml`
+  - **Details**: Add a step that uploads the `test-results/` directory as an artifact when visual tests fail, so reviewers can download and compare the actual vs expected screenshots. Add a comment to the workflow explaining how to update baselines locally.
+  - **Success Criteria**: Visual diff artifacts downloadable from failed CI runs
+
+#### Checkpoint
+- [ ] Tests pass in CI against live Azure SWA URL
+- [ ] Visual regression failures produce downloadable diff artifacts
 
 ---
 
@@ -181,17 +243,21 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the base site design.
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Gemini API key exposed in browser DevTools | Medium | Low | Key is user-provided, not ours. User controls their own key/billing. |
-| Content bundle too large for context window | Low | High | Total content is ~15K tokens; Gemini Flash supports 1M tokens. No risk. |
-| CORS issues calling Gemini API from browser | Low | Medium | Google's Gemini API supports CORS for browser calls with API key auth. |
-| Chat component breaks Starlight layout | Medium | Medium | Use Astro's `client:only` directive and fixed positioning to isolate the chat from page layout. |
+| Azure SWA site is down/unreachable | Low | High | Tests will fail with clear network error; retry in CI with `retries: 1` |
+| Chat loads CDNs (marked.js, DOMPurify) | Medium | Medium | Use `networkidle` waits; increase timeout for CDN-dependent pages |
+| Screenshot flakiness (font rendering, anti-aliasing) | High | Medium | Use `maxDiffPixelRatio: 0.01` tolerance; mask dynamic elements (cursors, timestamps); run baselines on same OS as CI (Linux) |
+| Azure SWA deployment lags behind `main` | Medium | Low | Tests verify what's actually deployed, not what's in git — this is a feature |
+| Chat widget auto-config on Azure SWA (has real API key) | Medium | Medium | Chat tests use fresh browser context (no stored config); chat auto-loads `chat-config.json` on SWA so setup screen may be skipped — tests must handle both flows |
+| Windows vs Linux screenshot baselines differ | High | Medium | Generate baselines in CI (Linux) and commit those; local devs on Windows use `--update-snapshots` or skip visual tests |
 
 ## Open Questions
 
-- [x] Which Gemini model? → `gemini-2.0-flash` (fast, cheap, large context)
-- [x] How to handle API key? → User-provided, stored in localStorage
-- [x] SDK vs raw fetch? → Raw fetch (smaller bundle, no dependency)
+- [x] ~~Should we test against live Azure SWA or local preview?~~ → **Live Azure SWA** (`https://polite-river-06e40841e.6.azurestaticapps.net`)
+- [x] ~~Visual regression screenshots or just functional?~~ → **Both**: functional tests + full-page and component-level visual regression
 
 ## Notes & Decisions
 
-- **2026-02-12**: Plan created for chat feature. Using client-side Gemini API calls to keep the site on GitHub Pages (no backend). Content is small enough (~15K tokens) to send full context with every request instead of building a RAG pipeline with embeddings/vector search.
+- **2026-02-16**: Plan created. Chromium-only to keep tests fast (~30s target). Can add Firefox/WebKit later.
+- **2026-02-16**: Decided to test against live Azure SWA URL instead of local preview. This tests the real deployment, including auto-configured chat. No need for `webServer` config.
+- **2026-02-16**: Added visual regression Phase 6 with full-page screenshots for all 9 pages + component-level screenshots for 5 key UI areas. Baselines committed to git.
+- **Testing philosophy**: "Smoke loop" pattern — hit every page first, then layer interaction + visual tests. Fast feedback over exhaustive coverage.
