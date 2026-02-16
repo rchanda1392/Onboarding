@@ -6,7 +6,9 @@
       "Bash(cmd /c:*)",
       "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding status)",
       "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding diff public/chat-loader.js)",
-      "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding log --oneline -5)"
+      "Bash(git -C /c/Users/rchanda/Documents/GitHub/Onboarding log --oneline -5)",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

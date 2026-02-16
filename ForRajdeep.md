@@ -6,11 +6,11 @@ Welcome to the behind-the-scenes story of your PM Onboarding site. This isn't a 
 
 ## The Big Picture: What Did We Build?
 
-We built a **static documentation website** that serves as a 12-hour study plan for a Product Manager joining Google's Core Data team. It has:
+We built a **static documentation website** that serves as a 14.5-hour study plan for a Product Manager joining Google's Core Data team. It has:
 
-- A **dashboard** (home page) with cards linking to 6 study modules
-- **6 content-rich modules** covering data pipelines, industry landscape, Google's ecosystem, AI strategy, AI + observability, and developer experience
-- A **glossary** of 35+ key terms
+- A **dashboard** (home page) with cards linking to 7 study modules
+- **7 content-rich modules** covering data pipelines, industry landscape, Google's ecosystem, ML/AI infrastructure, AI strategy, AI + observability, and developer experience
+- A **glossary** of 50+ key terms
 - **Built-in search** (powered by Pagefind) across all content
 - **Dark mode**, responsive design, and sidebar navigation — all for free
 - **Auto-deploy** to GitHub Pages on every push to `main`
@@ -74,12 +74,14 @@ Onboarding/
 │           │   └── index.mdx                          ← Module 2 content
 │           ├── module-3-google-ecosystem/
 │           │   └── index.mdx                          ← Module 3 content
-│           ├── module-4-ai-first-strategy/
+│           ├── module-4-ml-ai-infrastructure/
 │           │   └── index.mdx                          ← Module 4 content
-│           ├── module-5-ai-observability/
+│           ├── module-5-ai-first-strategy/
 │           │   └── index.mdx                          ← Module 5 content
-│           ├── module-6-developer-experience/
+│           ├── module-6-ai-observability/
 │           │   └── index.mdx                          ← Module 6 content
+│           ├── module-7-developer-experience/
+│           │   └── index.mdx                          ← Module 7 content
 │           └── glossary/
 │               └── index.mdx                          ← Glossary
 ├── .github/
@@ -109,7 +111,7 @@ The key insight: **all the "smart" stuff happens at build time**, not at runtime
 This is the most interesting engineering lesson from the build. Here's what happened:
 
 ### The Symptom
-After setting up the entire Astro + Starlight project with all 8 pages (dashboard + 6 modules + glossary), the production build generated **only 1 page** (the 404 error page). Zero content pages. But the dev server worked perfectly.
+After setting up the entire Astro + Starlight project with all 9 pages (dashboard + 7 modules + glossary), the production build generated **only 1 page** (the 404 error page). Zero content pages. But the dev server worked perfectly.
 
 ### The Investigation
 - `npm run dev` served all pages correctly → ✅
@@ -198,6 +200,36 @@ A headless CMS (like Contentful or Sanity) would add complexity without proporti
 - Require no external service
 - Can be edited by anyone with a text editor
 - Support Markdown (easy) plus components (powerful when needed)
+
+---
+
+## Module 4: The ML/AI Infrastructure Deep Dive
+
+The newest addition to the curriculum deserves its own callout. Module 4 ("ML/AI Infrastructure — From Data to Model") fills a critical gap in the study plan: none of the original 6 modules explained **what actually happens between having data and having a working ML model**.
+
+### Why This Module Matters for PMs
+
+As a PM on the Core Data team, you'll regularly interact with ML researchers and engineers. They'll say things like "we need more labeled data," "there's training-serving skew in the feature pipeline," or "the model is drifting." Without understanding the data-to-model journey, these conversations are opaque. With it, you can ask the right follow-up questions, set realistic timelines, and prioritize infrastructure investments.
+
+### How We Structured It
+
+The module has two "modes" woven together:
+
+1. **Systems view** — The technical infrastructure (feature stores, training pipelines, model serving, monitoring)
+2. **Researcher narrative** — What an ML researcher's actual day looks like, from problem framing to production deployment
+
+This dual approach means you learn both *what the systems do* and *why they exist in the context of someone's workflow*. It's the difference between reading a restaurant's equipment list vs. watching a chef cook a meal.
+
+### The Renumbering Adventure
+
+Adding this module as Module 4 (between Google Ecosystem and AI Strategy) required renumbering modules 4→5, 5→6, 6→7. This meant updating:
+- 3 folder names
+- 3 module titles in MDX frontmatter
+- All cross-references between modules (Module 5's "About" section references Module 4 for context)
+- The sidebar config, dashboard cards, reading order table
+- ~20 glossary entries that link back to specific modules
+
+**The engineering lesson**: Renumbering sounds simple but has a surprisingly large blast radius when content cross-references itself. If we'd anticipated this from the start, we might have used slug-based references (like `ai-first-strategy`) instead of numbered ones. This is analogous to using foreign keys vs. hardcoded IDs in a database — one is resilient to changes, the other is brittle.
 
 ---
 

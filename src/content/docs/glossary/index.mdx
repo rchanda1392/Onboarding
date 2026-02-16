@@ -4,7 +4,7 @@ description: "Key terms and definitions from all study modules"
 draft: false
 ---
 
-A reference guide to key terms used across all 6 study modules. Each term links back to the module where it's discussed in depth.
+A reference guide to key terms used across all 7 study modules. Each term links back to the module where it's discussed in depth.
 
 ---
 
@@ -14,10 +14,13 @@ A reference guide to key terms used across all 6 study modules. Each term links 
 Atomicity, Consistency, Isolation, Durability — a set of properties guaranteeing reliable database transactions. Delta Lake brings ACID to data lakes. → [Module 2](../module-2-industry-landscape/)
 
 **Agentic AI**
-AI systems that can autonomously plan, investigate, and take action — not just respond to prompts. In observability, agentic AI can detect incidents, investigate root causes, and suggest remediations with minimal human intervention. → [Module 5](../module-5-ai-observability/)
+AI systems that can autonomously plan, investigate, and take action — not just respond to prompts. In observability, agentic AI can detect incidents, investigate root causes, and suggest remediations with minimal human intervention. → [Module 6](../module-6-ai-observability/)
+
+**Active Learning**
+An ML technique that prioritizes which data points to label next by selecting the examples the model is most uncertain about. Gets the most learning value per label dollar. → [Module 4](../module-4-ml-ai-infrastructure/)
 
 **Anomaly Detection**
-Using ML to automatically identify data points or patterns that deviate from expected behavior. Replaces static threshold alerting for pipeline monitoring. → [Module 5](../module-5-ai-observability/)
+Using ML to automatically identify data points or patterns that deviate from expected behavior. Replaces static threshold alerting for pipeline monitoring. → [Module 6](../module-6-ai-observability/)
 
 **Apache Beam**
 A unified programming model for batch and streaming data processing. Write once, run on multiple engines (Dataflow, Spark, Flink). Created at Google based on FlumeJava and MillWheel. → [Module 1](../module-1-pipelines-and-observability/)
@@ -42,24 +45,30 @@ Google's distributed database for structured data at massive scale. Powers Searc
 ## C
 
 **CI/CD (Continuous Integration / Continuous Deployment)**
-Automated processes for building, testing, and deploying code changes. Observability can be integrated into CI/CD to catch data quality issues before production. → [Module 6](../module-6-developer-experience/)
+Automated processes for building, testing, and deploying code changes. Observability can be integrated into CI/CD to catch data quality issues before production. → [Module 7](../module-7-developer-experience/)
 
 **Cognitive Load**
-The mental effort required to use a tool or system. A key dimension of developer experience — lower cognitive load means faster adoption. → [Module 6](../module-6-developer-experience/)
+The mental effort required to use a tool or system. A key dimension of developer experience — lower cognitive load means faster adoption. → [Module 7](../module-7-developer-experience/)
 
 **Colossus**
 Google's next-generation distributed file system, successor to GFS. Powers the storage layer beneath BigQuery and most Google services. → [Module 3](../module-3-google-ecosystem/)
 
 **Concept Drift**
-When the statistical properties of a target variable change over time, making previously trained models less accurate. A key challenge for anomaly detection systems. → [Module 5](../module-5-ai-observability/)
+When the relationship between input data and the target output changes over time, making previously trained models less accurate. A key challenge for anomaly detection and production ML systems. → [Module 4](../module-4-ml-ai-infrastructure/) · [Module 6](../module-6-ai-observability/)
 
 **Copilot Pattern**
-An AI design pattern where the AI assists (suggests, drafts, investigates) while the human retains control and final decision-making. Exemplified by GitHub Copilot, Cursor, and Duet AI. → [Module 4](../module-4-ai-first-strategy/)
+An AI design pattern where the AI assists (suggests, drafts, investigates) while the human retains control and final decision-making. Exemplified by GitHub Copilot, Cursor, and Duet AI. → [Module 5](../module-5-ai-first-strategy/)
 
 ## D
 
+**Data Drift**
+When the statistical distribution of input data changes over time, causing model performance to degrade even if the underlying relationship hasn't changed. → [Module 4](../module-4-ml-ai-infrastructure/)
+
 **Data Freshness**
 How up-to-date the data is. One of the 5 pillars of data observability. Stale data can lead to bad decisions downstream. → [Module 1](../module-1-pipelines-and-observability/)
+
+**Data Labeling**
+The process of annotating raw data with ground-truth labels for supervised learning. Methods include human annotation, crowd-sourcing, active learning, and synthetic data generation. Often the most expensive and time-consuming part of ML. → [Module 4](../module-4-ml-ai-infrastructure/)
 
 **Data Lakehouse**
 An architecture combining data lake flexibility (cheap storage, all file types) with data warehouse reliability (ACID, schema enforcement, fast SQL). Pioneered by Databricks. → [Module 2](../module-2-industry-landscape/)
@@ -83,7 +92,7 @@ A transformation tool for data warehouses with built-in testing capabilities. db
 Open-source storage layer that brings ACID transactions, time travel, and schema enforcement to data lakes. Foundation of Databricks Lakehouse. → [Module 2](../module-2-industry-landscape/)
 
 **Developer Experience (DevEx)**
-The sum of all interactions a developer has with a tool or platform. Measured across three dimensions: feedback loops, cognitive load, and flow state. → [Module 6](../module-6-developer-experience/)
+The sum of all interactions a developer has with a tool or platform. Measured across three dimensions: feedback loops, cognitive load, and flow state. → [Module 7](../module-7-developer-experience/)
 
 **Dremel**
 Google's internal query engine, published as a research paper in 2010. The technology that became BigQuery. Introduced columnar storage with distributed tree-based execution. → [Module 3](../module-3-google-ecosystem/)
@@ -96,18 +105,35 @@ A data pipeline pattern where data is loaded raw into the destination and transf
 **ETL (Extract, Transform, Load)**
 A data pipeline pattern where data is transformed in a staging area before loading into the destination. Traditional approach from the era of expensive storage. → [Module 1](../module-1-pipelines-and-observability/)
 
+**Experiment Tracking**
+Recording parameters, metrics, and artifacts from ML training runs to enable comparison, reproducibility, and team collaboration. Tools include MLflow, Weights & Biases, and TensorBoard. → [Module 4](../module-4-ml-ai-infrastructure/)
+
 ## F
 
+**Feature Engineering**
+Transforming raw data into signals (features) that ML models can consume. Includes techniques like aggregations, embeddings, cross-features, and time-windowed computations. → [Module 4](../module-4-ml-ai-infrastructure/)
+
+**Feature Store**
+Infrastructure for managing, sharing, and serving ML features consistently across training and production. Prevents training-serving skew and enables feature reuse across teams. Tools include Feast, Vertex AI Feature Store, and Tecton. → [Module 4](../module-4-ml-ai-infrastructure/)
+
 **Flow State**
-A state of focused, uninterrupted work. Context-switching (leaving the IDE, navigating to other tools) disrupts flow. Good DevEx preserves flow state. → [Module 6](../module-6-developer-experience/)
+A state of focused, uninterrupted work. Context-switching (leaving the IDE, navigating to other tools) disrupts flow. Good DevEx preserves flow state. → [Module 7](../module-7-developer-experience/)
 
 ## G
 
 **GFS (Google File System)**
 Google's original distributed file system (2003). Designed for massive files on commodity hardware with built-in fault tolerance. Predecessor to Colossus. Inspired HDFS. → [Module 3](../module-3-google-ecosystem/)
 
+**GPU/TPU**
+Specialized processors for ML training. GPUs (Graphics Processing Units, primarily NVIDIA) are versatile and widely available. TPUs (Tensor Processing Units, Google-designed) are optimized specifically for matrix math in ML workloads. → [Module 4](../module-4-ml-ai-infrastructure/)
+
 **Great Expectations**
 Open-source Python framework for data validation. Define "expectations" for your data and validate against them programmatically. → [Module 2](../module-2-industry-landscape/)
+
+## H
+
+**Hyperparameter Tuning**
+Searching for the optimal training configuration (learning rate, batch size, number of layers, etc.) for an ML model. Approaches include grid search, random search, and Bayesian optimization. → [Module 4](../module-4-ml-ai-infrastructure/)
 
 ## L
 
@@ -119,13 +145,25 @@ Databricks' automated quality monitoring for tables and ML models. Tracks statis
 **MapReduce**
 Google's programming model for processing massive datasets across thousands of machines (2004 paper). Inspired the Hadoop ecosystem. → [Module 3](../module-3-google-ecosystem/)
 
+**MLOps**
+Practices for deploying and maintaining ML models in production reliably. The ML equivalent of DevOps — covers model versioning, deployment, monitoring, and retraining. → [Module 4](../module-4-ml-ai-infrastructure/)
+
+**Model Drift**
+Degradation in model performance over time due to changes in data (data drift), the underlying relationship (concept drift), or upstream feature computation (feature drift). Requires monitoring and retraining infrastructure to detect and address. → [Module 4](../module-4-ml-ai-infrastructure/)
+
+**Model Registry**
+Versioned storage for trained models with metadata, evaluation metrics, and approval workflows. Enables governance — tracking which model version is in production, who approved it, and what data it was trained on. → [Module 4](../module-4-ml-ai-infrastructure/)
+
+**Model Serving**
+Infrastructure for making trained models available for predictions. Patterns include batch inference (scheduled), real-time serving (low-latency API), edge deployment (on-device), and streaming inference. → [Module 4](../module-4-ml-ai-infrastructure/)
+
 **MTTR (Mean Time to Resolution)**
-Average time between an incident being detected and being resolved. A key metric for observability platforms — AI copilots aim to reduce MTTR. → [Module 5](../module-5-ai-observability/)
+Average time between an incident being detected and being resolved. A key metric for observability platforms — AI copilots aim to reduce MTTR. → [Module 6](../module-6-ai-observability/)
 
 ## N
 
 **NL2SQL (Natural Language to SQL)**
-Using LLMs to translate natural language questions into SQL queries. Enables non-technical users to query data systems and speeds up technical users. → [Module 5](../module-5-ai-observability/)
+Using LLMs to translate natural language questions into SQL queries. Enables non-technical users to query data systems and speeds up technical users. → [Module 6](../module-6-ai-observability/)
 
 ## O
 
@@ -138,7 +176,7 @@ An open standard for collecting telemetry data (traces, metrics, logs) from soft
 Unexpected changes to data structure (dropped columns, type changes, new fields). One of the most common causes of pipeline failures. → [Module 1](../module-1-pipelines-and-observability/)
 
 **Shift-Left Observability**
-Moving observability checks earlier in the development lifecycle — catching data quality issues in CI/CD before they reach production. → [Module 6](../module-6-developer-experience/)
+Moving observability checks earlier in the development lifecycle — catching data quality issues in CI/CD before they reach production. → [Module 7](../module-7-developer-experience/)
 
 **SLA (Service Level Agreement)**
 A formal promise to stakeholders about service reliability. For data: "Dashboard data will be no more than 1 hour stale, 99.5% of the time." → [Module 1](../module-1-pipelines-and-observability/)
@@ -158,10 +196,19 @@ Google's globally distributed database with external consistency. Uses GPS and a
 **Streaming**
 Processing data continuously as it arrives, in real-time or near-real-time. Essential when data freshness is critical. → [Module 1](../module-1-pipelines-and-observability/)
 
+**Synthetic Data**
+Artificially generated data that mimics the statistical properties of real data. Used for data augmentation, privacy preservation, and generating examples of rare events (like fraud). → [Module 4](../module-4-ml-ai-infrastructure/)
+
 ## T
 
 **Text-to-SQL**
-See NL2SQL. → [Module 5](../module-5-ai-observability/)
+See NL2SQL. → [Module 6](../module-6-ai-observability/)
+
+**TFX (TensorFlow Extended)**
+Google's end-to-end ML pipeline framework. Handles data validation, transformation, training, evaluation, and deployment. Used extensively inside Google and available as open source. → [Module 4](../module-4-ml-ai-infrastructure/)
+
+**Training-Serving Skew**
+When features are computed differently during model training vs production serving, causing silent performance degradation. Feature stores exist primarily to prevent this problem. → [Module 4](../module-4-ml-ai-infrastructure/)
 
 **TrueTime**
 Google's globally synchronized clock system using GPS and atomic clocks. Enables Spanner's globally consistent transactions. → [Module 3](../module-3-google-ecosystem/)

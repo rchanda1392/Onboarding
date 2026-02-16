@@ -1,0 +1,358 @@
+---
+title: "Module 4: ML/AI Infrastructure — From Data to Model"
+description: "How data gets prepared for ML models, feature engineering, training infrastructure, model serving, and what ML researchers' workflows actually look like"
+draft: false
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## About This Module
+
+Modules 1-3 taught you how data moves, how the industry thinks about data quality, and how Google's data ecosystem works. But there's a critical next question: **how does all that data actually become a working ML model?**
+
+This module bridges the gap between "we have data" and "we have AI." As a PM on Google's Core Data team, you'll work with ML researchers and engineers every day. They'll talk about features, training runs, serving latency, and model drift — and you need to understand what they mean, why it matters, and where the bottlenecks are.
+
+We'll cover the full journey: from collecting and labeling raw data, to engineering features, to training models at scale, to serving predictions in production. Along the way, you'll see what an ML researcher's day actually looks like — and why most of their time isn't spent on the glamorous "building models" part.
+
+**Estimated Study Time: 2.5 hours**
+
+---
+
+## Section 1: The ML Researcher's Journey — A Day in the Life
+
+Before diving into infrastructure, let's walk through what it actually looks like to go from "business problem" to "production model." This context will make every other section click.
+
+### Step 1: Problem Framing
+
+An ML researcher doesn't start with "let's build a model." They start with a business problem and ask: **can ML solve this better than a rule-based approach?** This is called problem framing — translating a vague request like "make our recommendations better" into a concrete ML formulation like "predict the probability that user X will click on item Y given their past 30 days of activity."
+
+This step is where PM input matters most. A badly framed problem leads to months of wasted work, no matter how good the model is.
+
+### Step 2: Data Exploration
+
+Before writing any model code, the researcher spends days (sometimes weeks) exploring the data. What's available? How clean is it? Are there enough labeled examples? What biases exist? This is unglamorous spreadsheet-and-notebook work, but it determines whether the project succeeds or fails.
+
+### Step 3: Feature Engineering
+
+Raw data isn't directly useful to models. The researcher transforms it into **features** — signals the model can learn from. This might mean computing "average session duration over the last 7 days" from raw clickstream logs, or extracting text embeddings from product descriptions.
+
+### Step 4: Experimentation
+
+Now comes the actual model building — but it's not a single attempt. It's dozens or hundreds of experiments: trying different model architectures, hyperparameters, feature combinations, and training strategies. Each experiment is tracked, compared, and analyzed.
+
+### Step 5: Evaluation and Iteration
+
+The researcher evaluates models against held-out test data, checks for fairness and bias, and tests edge cases. Most experiments fail. Back to step 3 (or even step 1).
+
+### Step 6: Productionization
+
+Once a model performs well offline, it needs to work in production — at scale, with low latency, handling real traffic. This is often called the "last mile" and it's where many ML projects die. The researcher's Jupyter notebook that works on a sample dataset needs to become a robust service handling millions of requests per second.
+
+### Who Does What?
+
+Understanding the division of labor helps you know who to talk to:
+
+| Role | Primary Focus | What They Care About |
+|------|--------------|---------------------|
+| **ML Researcher / Scientist** | Model development, experimentation, novel techniques | Model quality, evaluation metrics, state-of-the-art methods |
+| **ML Engineer** | Productionizing models, building pipelines, infrastructure | Latency, throughput, reliability, scaling |
+| **Data Engineer** | Building and maintaining data pipelines, data quality | Freshness, schema stability, pipeline uptime |
+| **PM** | Problem framing, prioritization, success metrics | Business impact, user experience, feasibility, timeline |
+
+> **Key Insight:** Most of an ML researcher's time isn't spent on modeling — estimates suggest **80% of ML work is data preparation, cleaning, and feature engineering.** As a PM, if you only plan for the "model building" part, your timelines will be wildly off.
+
+### The "Last Mile" Problem
+
+The gap between a working prototype and a production system is enormous. A model that runs in a Jupyter notebook on a laptop is fundamentally different from one that serves 100,000 predictions per second with 50ms latency. This gap is why "MLOps" exists — it's the discipline of making ML actually work in production, reliably, at scale.
+
+Think of it like the difference between cooking a great meal at home and running a restaurant. The recipe is the same, but everything around it — supply chain, consistency, speed, scale — is a completely different problem.
+
+### Resources
+
+- 📄 [Rules of ML: Best Practices for ML Engineering — Martin Zinkevich (Google)](https://developers.google.com/machine-learning/guides/rules-of-ml) — The definitive guide to practical ML engineering from Google, written for practitioners and PMs
+- 📄 [Software 2.0 — Andrej Karpathy](https://karpathy.medium.com/software-2-0-a64152b37c35) — Influential essay on how ML changes software development fundamentals
+- 📚 [Designing Machine Learning Systems — Chip Huyen (O'Reilly)](https://www.oreilly.com/library/view/designing-machine-learning/9781098107956/) — Comprehensive guide covering the full ML lifecycle from problem framing to production
+
+---
+
+## Section 2: Data Collection & Labeling
+
+Every ML model starts with data — and the quality of that data is the single biggest determinant of model quality. "Garbage in, garbage out" is the oldest cliche in data science, but it's true at every scale.
+
+### Where Training Data Comes From
+
+| Source | Example | Pros | Cons |
+|--------|---------|------|------|
+| **Application logs** | User clicks, searches, purchases | Abundant, naturally generated, reflects real behavior | Noisy, biased toward existing users, privacy concerns |
+| **Existing databases** | Product catalogs, user profiles | Structured, clean, well-understood | May not have the right labels, static snapshots |
+| **Public datasets** | ImageNet, Common Crawl, Wikipedia | Free, large-scale, community-validated | May not match your domain, licensing issues |
+| **Purchased data** | Third-party data vendors, data marketplaces | Fills specific gaps | Expensive, quality varies, dependency on vendor |
+| **User contributions** | Ratings, reviews, corrections | High-quality signals, users motivated to be accurate | Sparse, biased toward power users, cold-start problem |
+
+Google has a unique advantage here: products like Maps, Search, YouTube, and Gmail generate massive labeled datasets as a natural byproduct of user interaction. Every time someone corrects a Maps pin location, rates a YouTube video, or marks an email as spam, they're creating training data.
+
+### Data Labeling Workflows
+
+**Supervised learning** — the most common type of ML — requires labeled data. Someone (or something) has to look at each example and tag it with the correct answer. This is labeling, and it's one of the most expensive and time-consuming parts of ML.
+
+**Human annotation** is the gold standard. Expert annotators review examples and assign labels according to detailed guidelines. This produces high-quality labels but is slow and expensive — especially for tasks requiring domain expertise (like medical imaging or legal document review).
+
+**Crowd-sourcing** platforms like Scale AI, Labelbox, and Amazon Mechanical Turk distribute labeling work across many workers. This scales better but introduces quality challenges — you need redundancy (multiple annotators per example), quality checks, and careful guideline design.
+
+**Semi-supervised learning** uses a small labeled dataset to generate labels for a larger unlabeled dataset. The model learns from the labeled examples and then "guesses" labels for unlabeled ones, with humans reviewing the uncertain cases. This dramatically reduces labeling costs.
+
+**Active learning** is a smarter approach to labeling: instead of labeling examples randomly, the model identifies which unlabeled examples it's most uncertain about and asks humans to label those first. This gets you the most learning value per label dollar.
+
+### Synthetic Data
+
+Sometimes real data isn't available, is too expensive to collect, or has privacy constraints. **Synthetic data** is artificially generated data that mimics the statistical properties of real data.
+
+Use cases:
+- **Rare events**: Fraud detection models need examples of fraud, but real fraud is (thankfully) rare. Synthetic generation creates realistic fraud examples.
+- **Privacy**: Healthcare models can train on synthetic patient records that preserve statistical patterns without containing real patient information.
+- **Data augmentation**: Image models benefit from rotated, cropped, and color-shifted versions of existing images.
+
+> **Key Insight:** Data labeling is often the bottleneck for ML projects — not model architecture, not compute, not engineering talent. When an ML team says they need "more data," they usually mean "more labeled data," and that means human time and money. As a PM, understanding this bottleneck is critical for realistic timeline planning.
+
+### Resources
+
+- 📄 [A Guide to Data Labeling for AI — Scale AI](https://scale.com/guides/data-labeling-annotation-guide) — Comprehensive guide from a leading data labeling platform
+- 📄 [Active Learning: A Survey — Settles (2009)](https://burrsettles.com/pub/settles.activelearning.pdf) — The foundational academic survey on active learning
+- 📄 [The Data-Centric AI Movement — Andrew Ng](https://datacentricai.org/) — Andrew Ng's initiative arguing that improving data quality matters more than model architecture
+- 📄 [Synthetic Data for Machine Learning — Google Cloud](https://cloud.google.com/blog/products/ai-machine-learning/synthetic-data-for-machine-learning) — How Google Cloud approaches synthetic data generation
+
+---
+
+## Section 3: Feature Engineering & Feature Stores
+
+Raw data is not model-ready data. The process of transforming raw data into signals that ML models can learn from is called **feature engineering**, and it's both an art and a science.
+
+### What Are Features?
+
+A **feature** is a measurable property of a data point that a model uses to make predictions. For a fraud detection model, features might include:
+
+- `transaction_amount` — the dollar value of the purchase
+- `avg_transaction_last_30d` — the user's average transaction amount over the past 30 days
+- `time_since_last_transaction` — how many minutes since the user's previous purchase
+- `country_mismatch` — whether the transaction country differs from the user's home country
+- `device_fingerprint_new` — whether this device has been seen before
+
+Notice how some features are raw data (`transaction_amount`) while others require computation (`avg_transaction_last_30d`). The computed ones are where the engineering happens.
+
+### Common Feature Engineering Patterns
+
+| Pattern | What It Does | Example |
+|---------|-------------|---------|
+| **Aggregations** | Summarize behavior over time windows | Average spend per week, total logins this month |
+| **Embeddings** | Convert text/images to dense numeric vectors | Product description → 128-dimensional vector |
+| **Cross-features** | Combine two features into one | `user_country × product_category` interaction |
+| **Time-windowed** | Compute features over rolling windows | 7-day moving average of clicks |
+| **Bucketing** | Group continuous values into categories | Age groups: 18-24, 25-34, 35-44 |
+| **Encoding** | Convert categories to numbers | Country → one-hot vector or ordinal encoding |
+
+### The Feature Store Concept
+
+As ML teams grow, a recurring problem emerges: different teams compute the same features differently. The fraud team calculates "average transaction amount" one way, the recommendations team calculates it another way. Neither knows the other exists. When the same feature is used for training and serving, slight differences in computation lead to **training-serving skew** — the model sees different data in production than it saw during training, and performance silently degrades.
+
+A **feature store** solves this by providing a centralized repository for feature definitions and computed feature values. Think of it as a shared library for ML features — compute once, use everywhere, guarantee consistency.
+
+### Online vs Offline Serving
+
+Feature stores serve two audiences with very different needs:
+
+| Aspect | Offline (Training) | Online (Serving) |
+|--------|-------------------|-----------------|
+| **Purpose** | Generate features for training datasets | Serve features for real-time predictions |
+| **Latency requirement** | Minutes to hours is fine | Milliseconds required |
+| **Data volume** | Large historical batches | Single-row lookups |
+| **Storage** | Data warehouse, object storage | Low-latency key-value store (Redis, Bigtable) |
+| **Update frequency** | Batch (hourly/daily) | Continuously updated |
+
+The critical requirement is **consistency**: the features a model trains on must be computed exactly the same way as the features it sees in production.
+
+### Key Tools
+
+- **Feast** (open source): The most popular open-source feature store. Supports offline (BigQuery, Snowflake) and online (Redis, DynamoDB) stores.
+- **Vertex AI Feature Store** (Google Cloud): Managed feature store integrated with Vertex AI. Handles both online and offline serving with automatic sync.
+- **Tecton**: Enterprise feature store with strong real-time capabilities and ML pipeline integration.
+- **Hopsworks**: Open-source feature store with a focus on Python-native workflows and experiment tracking integration.
+
+> **Key Insight:** Feature stores solve one of ML's sneakiest bugs — **training-serving skew**. If the features your model trains on are computed differently from the features it sees in production, performance silently degrades. It's like studying for a test using the wrong edition of the textbook — the material looks similar, but the details are different enough to trip you up.
+
+### Resources
+
+- 📄 [What is a Feature Store? — Tecton](https://www.tecton.ai/blog/what-is-a-feature-store/) — Clear introduction to the feature store concept and why it matters
+- 📄 [Feast: An Open Source Feature Store — Feast Documentation](https://docs.feast.dev/) — Official docs for the most popular open-source feature store
+- 📄 [Vertex AI Feature Store Documentation — Google Cloud](https://cloud.google.com/vertex-ai/docs/featurestore/overview) — Google's managed feature store offering
+- 📄 [Feature Engineering for Machine Learning — O'Reilly](https://www.oreilly.com/library/view/feature-engineering-for/9781491953235/) — Deep dive into feature engineering techniques and best practices
+
+---
+
+## Section 4: Training Infrastructure
+
+Once you have labeled data and engineered features, you need to actually train the model. At scale, this is a massive infrastructure challenge.
+
+### Why Distributed Training?
+
+Modern ML models can have billions of parameters (GPT-4 reportedly has over 1 trillion). Training them requires processing petabytes of data through these parameters, adjusting weights based on errors, and repeating the process for thousands of iterations. A single machine — even with a powerful GPU — would take months or years.
+
+**Distributed training** splits this work across many machines. Two main approaches:
+
+- **Data parallelism**: Each machine gets a copy of the full model and a different slice of the training data. After each pass, machines synchronize their learned updates. Good for large datasets with models that fit on one machine.
+- **Model parallelism**: The model itself is split across machines, with each machine holding a portion of the parameters. Necessary for models too large to fit in a single machine's memory (like large language models).
+
+### GPU vs TPU
+
+These are the specialized chips that make ML training feasible:
+
+| Aspect | GPU (Graphics Processing Unit) | TPU (Tensor Processing Unit) |
+|--------|-------------------------------|------------------------------|
+| **Made by** | NVIDIA (dominates), AMD | Google (custom-designed) |
+| **Originally for** | Video game graphics | ML training and inference only |
+| **Key advantage** | Versatile, massive ecosystem, CUDA software | Optimized for matrix math, tight Google Cloud integration |
+| **Best for** | General ML, research experimentation | Large-scale training, TPU-optimized models (TensorFlow, JAX) |
+| **Access** | Buy or rent (AWS, GCP, Azure) | Google Cloud only (on-demand or reserved) |
+| **Cost model** | Per-GPU-hour | Per-TPU-chip-hour |
+
+Google's TPU pods — clusters of thousands of TPU chips connected by high-speed interconnects — can train models in hours that would take GPU clusters days. This is a meaningful competitive advantage.
+
+### Experiment Tracking
+
+An ML researcher might run hundreds of experiments while developing a model. Each experiment has different hyperparameters (learning rate, batch size, model architecture choices), different training data subsets, and different feature combinations. Without tracking, it's impossible to know which configuration produced the best results — or to reproduce them later.
+
+| Tool | Open Source? | Key Features |
+|------|-------------|-------------|
+| **MLflow** | Yes | Experiment logging, model registry, deployment tools. Widely adopted in industry. |
+| **Weights & Biases (W&B)** | Freemium | Beautiful dashboards, team collaboration, hyperparameter sweep visualization. Popular in research. |
+| **TensorBoard** | Yes (Google) | Training visualization, metric tracking, graph visualization. Built into TensorFlow. |
+| **Vertex AI Experiments** | No (Google Cloud) | Integrated with Vertex AI pipelines, managed infrastructure. |
+
+### Hyperparameter Tuning
+
+Hyperparameters are the configuration knobs of ML training — learning rate, batch size, number of layers, dropout rate, etc. Finding the optimal combination is critical but expensive.
+
+- **Grid search**: Try every combination in a predefined grid. Thorough but wasteful — most combinations are useless.
+- **Random search**: Sample random combinations. Surprisingly effective — [research shows](https://www.jmlr.org/papers/v13/bergstra12a.html) it finds good configurations faster than grid search in most cases.
+- **Bayesian optimization**: Use past results to intelligently choose the next combination to try. More efficient than random, but more complex to implement.
+
+### ML Pipelines
+
+Training a model isn't a single step — it's a pipeline: ingest data → validate → transform → split → train → evaluate → register. ML pipeline tools orchestrate this workflow:
+
+- **TFX (TensorFlow Extended)**: Google's end-to-end ML pipeline framework. Handles data validation (TFDV), data transformation (TFT), training, evaluation (TFMA), and deployment. Used extensively inside Google.
+- **Kubeflow Pipelines**: Kubernetes-native ML pipelines. More flexible than TFX, supports any ML framework, but requires Kubernetes expertise.
+- **Vertex AI Pipelines**: Google Cloud's managed pipeline service. Runs TFX or Kubeflow pipelines without managing infrastructure.
+
+### Reproducibility
+
+"It worked in my notebook" is ML's version of "it works on my machine." Reproducibility requires tracking:
+- Exact code version (git commit)
+- Exact data version (which rows, which snapshot)
+- Exact environment (library versions, hardware)
+- Random seeds
+- Hyperparameters
+
+Without all of these, reproducing a result — even your own from last week — becomes a guessing game.
+
+> **Key Insight:** Training infrastructure is one of the most expensive line items in any ML organization's budget. A single large model training run on a TPU pod can cost hundreds of thousands of dollars. As a PM, understanding compute costs helps you make realistic prioritization decisions — is this experiment worth the compute budget?
+
+### Resources
+
+- 📄 [An Introduction to Distributed Training — Hugging Face](https://huggingface.co/docs/transformers/perf_train_gpu_many) — Practical guide to distributed training concepts and techniques
+- 📄 [Google Cloud TPU Documentation](https://cloud.google.com/tpu/docs/intro-to-tpu) — Introduction to TPUs and how they compare to GPUs
+- 📄 [MLflow Documentation](https://mlflow.org/docs/latest/index.html) — Official docs for the most popular open-source experiment tracking platform
+- 📄 [TFX: A TensorFlow-Based Production-Scale ML Platform — Google (KDD 2017)](https://research.google/pubs/tfx-a-tensorflow-based-production-scale-machine-learning-platform/) — The original TFX paper explaining Google's ML pipeline architecture
+- 📄 [Random Search for Hyper-Parameter Optimization — Bergstra & Bengio (2012)](https://www.jmlr.org/papers/v13/bergstra12a.html) — The influential paper showing random search beats grid search
+
+---
+
+## Section 5: Model Serving & Monitoring
+
+A trained model sitting in storage is just a file. To create value, it needs to serve predictions to users, applications, and other systems — reliably, at scale, and with low latency.
+
+### Deployment Patterns
+
+| Pattern | How It Works | When to Use | Example |
+|---------|-------------|-------------|---------|
+| **Batch inference** | Run predictions on a large dataset on a schedule (hourly, daily) | When predictions don't need to be real-time | "Compute recommendation scores for all users overnight" |
+| **Real-time serving** | Model runs as a service, responding to individual prediction requests in milliseconds | User-facing features, interactive products | "Predict fraud probability for this transaction right now" |
+| **Edge deployment** | Model runs on-device (phone, IoT, browser) | Low-latency, offline capability, privacy | "Autocomplete suggestions on your keyboard" |
+| **Streaming inference** | Model processes events from a stream (Kafka, Pub/Sub) continuously | Near-real-time processing of event data | "Score every ad click for fraud as it happens" |
+
+### Model Registries
+
+A **model registry** is a versioned store for trained models — think of it like Git, but for ML models. It tracks:
+- Model versions (v1, v2, v3...)
+- Training metadata (what data, what hyperparameters)
+- Evaluation metrics (accuracy, latency benchmarks)
+- Approval status (staging, approved for production, retired)
+
+This enables governance: you can trace exactly which model is serving production traffic, who approved it, and what data it was trained on.
+
+### A/B Testing and Canary Deployments
+
+You wouldn't ship a major code change to all users at once, and models are no different:
+
+- **A/B testing**: Route a percentage of traffic to the new model and compare business metrics (click-through rate, revenue, engagement) against the current model. This tells you if the new model is actually better in production, not just on test data.
+- **Canary deployment**: Route a tiny fraction (1-5%) of traffic to the new model first. If metrics look healthy, gradually increase. If something goes wrong, the blast radius is limited.
+- **Shadow mode**: Run the new model alongside the current one, but don't serve its predictions to users. Compare outputs to spot problems before any user impact.
+
+### Model Drift
+
+Models degrade over time. The world changes, and the patterns the model learned become stale. There are three types of drift to watch for:
+
+| Type | What Changes | Example | How to Detect |
+|------|-------------|---------|--------------|
+| **Data drift** | Input data distribution shifts | Users start using the app differently after a UI redesign | Monitor input feature distributions over time |
+| **Concept drift** | The relationship between inputs and outputs changes | What "spam" looks like evolves as spammers adapt tactics | Monitor prediction accuracy against ground truth |
+| **Feature drift** | Upstream feature computation changes | A data pipeline bug changes how "avg_session_duration" is calculated | Compare feature distributions between training and serving |
+
+### Retraining Strategies
+
+When drift is detected, the model needs to be retrained. There are three approaches:
+
+- **Scheduled retraining**: Retrain on a fixed schedule (weekly, monthly). Simple and predictable, but may retrain too often (wasting compute) or too rarely (serving stale predictions).
+- **Drift-triggered retraining**: Automatically retrain when drift metrics exceed thresholds. More responsive, but requires robust drift detection infrastructure.
+- **Performance-triggered retraining**: Retrain when business metrics (accuracy, click-through rate) drop below an acceptable level. Most aligned with business impact, but requires fast ground-truth feedback loops.
+
+### The Feedback Loop
+
+Production ML creates a virtuous cycle: the model serves predictions → users interact with those predictions → those interactions become new training data → the next model version improves.
+
+This feedback loop is both powerful and dangerous. If the model has biases, those biases influence user behavior, which generates biased data, which trains a more biased model. Understanding and monitoring this loop is critical.
+
+> **Key Insight:** Deploying a model isn't the finish line — it's the starting line. Models degrade over time as the world changes. The infrastructure for monitoring and retraining is just as important as the infrastructure for training in the first place. Think of it less like shipping software and more like tending a garden — it needs ongoing care.
+
+### Resources
+
+- 📄 [ML Model Monitoring — Google Cloud](https://cloud.google.com/vertex-ai/docs/model-monitoring/overview) — Google's approach to model monitoring and drift detection
+- 📄 [Monitoring Machine Learning Models in Production — Evidently AI](https://www.evidentlyai.com/blog/machine-learning-monitoring-guide) — Practical guide to production ML monitoring
+- 📄 [Hidden Technical Debt in Machine Learning Systems — Google (NeurIPS 2015)](https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) — Landmark paper on the maintenance burden of production ML systems
+- 📄 [Continuous Delivery for Machine Learning — ThoughtWorks](https://martinfowler.com/articles/cd4ml.html) — How to apply CD practices to ML model deployment
+
+---
+
+## Key Takeaways
+
+- **80% of ML work is data** — not modeling. Data collection, labeling, cleaning, and feature engineering dominate the timeline and budget. Plan accordingly.
+- **The ML researcher's workflow is iterative** — problem framing → data exploration → feature engineering → experimentation → evaluation → productionization. Many cycles, many failures. This is normal, not a sign of poor planning.
+- **Labeled data is the bottleneck** for most ML projects. Understanding labeling approaches (human annotation, crowd-sourcing, active learning, synthetic data) helps you estimate costs and timelines.
+- **Feature stores exist to prevent training-serving skew** — one of the sneakiest bugs in production ML. If features are computed differently during training and serving, the model silently underperforms.
+- **Training at scale is expensive** — GPU/TPU costs can dominate ML budgets. Understanding compute costs helps you prioritize experiments and make ROI-based decisions.
+- **Experiment tracking is non-negotiable** — without it, results are irreproducible and team collaboration breaks down.
+- **Models degrade over time** — data drift, concept drift, and feature drift all require monitoring and retraining infrastructure. Shipping a model without monitoring is like launching a satellite without ground control.
+- **The feedback loop is both powerful and dangerous** — production predictions influence future training data, which can amplify biases if not carefully monitored.
+
+---
+
+## Reflect & Apply
+
+1. **Data bottleneck**: If your team wanted to build an ML feature that detects anomalies in data pipeline behavior, where would the labeled training data come from? How would you define what counts as an "anomaly" — and who would create those labels?
+
+2. **Feature store value**: Your team has 5 different ML models in production, each with its own feature pipelines. What problems might arise? How would you make the case for investing in a feature store?
+
+3. **Compute tradeoffs**: An ML researcher wants to run 200 experiments to find the optimal model architecture. Each experiment takes 4 hours on a TPU pod and costs $500. How would you help prioritize which experiments to run? What questions would you ask?
+
+4. **Monitoring strategy**: A model that detects schema changes in upstream data pipelines has been deployed for 6 months. Accuracy seems to be dropping. What types of drift might be causing this, and what data would you look at to diagnose it?
+
+5. **Timeline reality check**: An ML engineer tells you a new model will take "2 weeks to build." Based on what you've learned in this module, what follow-up questions would you ask to get a more realistic estimate?
