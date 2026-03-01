@@ -158,24 +158,35 @@ async function* streamChatGemini(config, userMessage, history) {
     { role: 'user', parts: [{ text: userMessage }] },
   ];
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${encodeURIComponent(config.apiKey)}`;
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(config.apiKey)}`;
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemText }] },
-      contents,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-    }),
+  const body = JSON.stringify({
+    system_instruction: { parts: [{ text: systemText }] },
+    contents,
+    generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
   });
+
+  // Retry once on 429 (transient rate limit)
+  let res;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    if (res.status !== 429 || attempt === 1) break;
+    await new Promise(r => setTimeout(r, 2000)); // wait 2s before retry
+  }
 
   if (!res.ok) {
     const err = await res.text();
-    if (res.status === 400) throw new Error('Bad request. Check your API key and try again.');
-    if (res.status === 403) throw new Error('API key not authorized. Verify your key at ai.google.dev.');
-    if (res.status === 429) throw new Error('Rate limit reached. Wait a moment and try again.');
-    throw new Error(`Gemini API error (${res.status}): ${err.substring(0, 200)}`);
+    let detail = '';
+    try { detail = JSON.parse(err)?.error?.message || ''; } catch { detail = err.substring(0, 200); }
+    if (res.status === 400) throw new Error(`Bad request: ${detail}`);
+    if (res.status === 403) throw new Error(`API key not authorized: ${detail}`);
+    if (res.status === 429) throw new Error(`Rate limit reached: ${detail}`);
+    throw new Error(`Gemini API error (${res.status}): ${detail}`);
   }
 
   const reader = res.body.getReader();
@@ -365,7 +376,7 @@ function createChatWidget() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
-      <div id="chat-composer-footer">Powered by Google Gemini</div>
+      <div id="chat-composer-footer">Powered by Google Gemini 2.5 Flash</div>
     </div>
   `;
   document.body.appendChild(sidebar);
