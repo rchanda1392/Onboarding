@@ -1,13 +1,12 @@
 /**
  * Chat sidebar — always-visible right panel.
- * Calls Azure OpenAI GPT-4o with the full content bundle as context.
+ * Calls Google Gemini (GitHub Pages) or Azure OpenAI (Azure SWA) with the full content bundle as context.
  */
 
 // Detect base path: /Onboarding on GitHub Pages, / on Azure SWA
 const BASE = document.querySelector('link[rel="sitemap"]')?.href?.match(/^https?:\/\/[^/]+(\/[^/]+)?\/sitemap/)?.[1] || '';
-const CONFIG_STORAGE = 'aoai-config';
+const CONFIG_STORAGE = 'gemini-config';
 const MAX_HISTORY = 10;
-// API_VERSION no longer needed — user provides full endpoint URI
 const PANEL_WIDTH = '420px';
 
 /* ── Markdown rendering dependencies (loaded lazily from CDN) ── */
@@ -78,11 +77,11 @@ async function loadContent() {
   return contentCache;
 }
 
+/* ── Azure OpenAI streaming (used by Azure SWA embedded config) ── */
 async function* streamChat(config, userMessage, history) {
   const content = await loadContent();
   const systemInstruction = `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---`;
 
-  // Build conversation input for the Responses API
   const input = [
     ...history.map(m => ({
       type: 'message',
@@ -92,7 +91,6 @@ async function* streamChat(config, userMessage, history) {
     { type: 'message', role: 'user', content: userMessage },
   ];
 
-  // Ensure api-version is in the URL
   let url = config.endpointUri;
   if (!url.includes('api-version')) {
     url += (url.includes('?') ? '&' : '?') + 'api-version=2024-12-01-preview';
@@ -134,16 +132,68 @@ async function* streamChat(config, userMessage, history) {
       if (!data || data === '[DONE]') continue;
       try {
         const parsed = JSON.parse(data);
-        // Responses API format
         const delta = parsed?.delta;
         if (delta) { yield delta; continue; }
-        // Also check for output_text delta event type
         if (parsed?.type === 'response.output_text.delta' && parsed?.delta) {
           yield parsed.delta;
           continue;
         }
-        // Fallback: Chat Completions format
         const text = parsed?.choices?.[0]?.delta?.content;
+        if (text) yield text;
+      } catch { /* skip */ }
+    }
+  }
+}
+
+/* ── Google Gemini streaming (used by GitHub Pages / localStorage config) ── */
+async function* streamChatGemini(config, userMessage, history) {
+  const content = await loadContent();
+  const systemText = `${SYSTEM_PROMPT}\n\n--- STUDY MODULE CONTENT ---\n\n${content}\n\n--- END CONTENT ---`;
+
+  const contents = [
+    ...history.map(m => ({
+      role: m.role === 'model' ? 'model' : 'user',
+      parts: [{ text: m.text }],
+    })),
+    { role: 'user', parts: [{ text: userMessage }] },
+  ];
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${encodeURIComponent(config.apiKey)}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemText }] },
+      contents,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    if (res.status === 400) throw new Error('Bad request. Check your API key and try again.');
+    if (res.status === 403) throw new Error('API key not authorized. Verify your key at ai.google.dev.');
+    if (res.status === 429) throw new Error('Rate limit reached. Wait a moment and try again.');
+    throw new Error(`Gemini API error (${res.status}): ${err.substring(0, 200)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data) continue;
+      try {
+        const parsed = JSON.parse(data);
+        const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) yield text;
       } catch { /* skip */ }
     }
@@ -227,7 +277,9 @@ async function sendMessage() {
     const history = messages.slice(-MAX_HISTORY);
     let botText = '';
 
-    for await (const chunk of streamChat(config, text, history.slice(0, -1))) {
+    // Azure SWA (embedded config) → Azure OpenAI; GitHub Pages (localStorage) → Gemini
+    const streamer = embeddedConfig ? streamChat : streamChatGemini;
+    for await (const chunk of streamer(config, text, history.slice(0, -1))) {
       if (thinkingDot.parentNode) thinkingDot.remove();
       botText += chunk;
       bubble.innerHTML = renderMarkdown(botText);
@@ -286,12 +338,10 @@ function createChatWidget() {
         <div class="chat-setup-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
-        <h3>Connect to Azure OpenAI</h3>
-        <p>Enter your Azure OpenAI details to start asking questions about the study modules.</p>
-        <label class="chat-label">Endpoint URI</label>
-        <input type="text" id="chat-endpoint-uri" placeholder="https://resource.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21" />
+        <h3>Connect to Google Gemini</h3>
+        <p>Enter your Google AI Studio API key to start asking questions about the study modules.</p>
         <label class="chat-label">API Key</label>
-        <input type="password" id="chat-key-input" placeholder="Your API key" />
+        <input type="password" id="chat-key-input" placeholder="Your Google AI Studio API key" />
         <button id="chat-save-key">Connect</button>
         <p class="chat-setup-note">Your credentials are stored locally in your browser and never sent to our servers.</p>
       </div>
@@ -315,7 +365,7 @@ function createChatWidget() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
-      <div id="chat-composer-footer">Powered by Azure OpenAI GPT-5.2</div>
+      <div id="chat-composer-footer">Powered by Google Gemini</div>
     </div>
   `;
   document.body.appendChild(sidebar);
@@ -343,10 +393,9 @@ function createChatWidget() {
 
 function bindEvents() {
   document.getElementById('chat-save-key').onclick = () => {
-    const endpointUri = document.getElementById('chat-endpoint-uri').value.trim();
     const apiKey = document.getElementById('chat-key-input').value.trim();
-    if (!endpointUri || !apiKey) return;
-    localStorage.setItem(CONFIG_STORAGE, JSON.stringify({ endpointUri, apiKey }));
+    if (!apiKey) return;
+    localStorage.setItem(CONFIG_STORAGE, JSON.stringify({ apiKey }));
     showChat();
   };
   document.getElementById('chat-key-input').onkeydown = (e) => {
@@ -452,7 +501,7 @@ function injectStyles() {
       color: var(--sl-color-gray-3, #999);
       margin: 1rem 0 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;
     }
-    #chat-endpoint-uri, #chat-key-input {
+    #chat-key-input {
       width: 100%; box-sizing: border-box;
       padding: 0.6rem 0.75rem; border-radius: 8px;
       border: 1px solid var(--sl-color-gray-5, #2a2a3d);
@@ -461,7 +510,7 @@ function injectStyles() {
       font-size: 0.85rem; outline: none;
       transition: border-color 0.15s;
     }
-    #chat-endpoint-uri:focus, #chat-key-input:focus {
+    #chat-key-input:focus {
       border-color: #d97706;
     }
     #chat-save-key {

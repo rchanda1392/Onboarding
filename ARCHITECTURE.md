@@ -403,6 +403,62 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 **Decision**: Lazy-load marked.js + DOMPurify from CDN to render bot responses as formatted HTML.
 **Rationale**: CDN avoids adding npm dependencies for a runtime-only feature. DOMPurify prevents XSS from rendered markdown.
 
+### 2026-03-01: GitHub Pages Chat — Switch from Azure OpenAI to Google Gemini
+**Context**: User wants to use Google Gemini instead of Azure OpenAI for the GitHub Pages deployment. Azure SWA deployment stays on Azure OpenAI.
+**Mode**: Technical Decision / Mid-Execution Pivot
+
+**Scope**: GitHub Pages deployment only. Azure SWA deployment remains unchanged.
+
+**Decision**: Replace Azure OpenAI with Google Gemini 2.0 Flash in `chat-loader.js` for the GitHub Pages path.
+
+**Approach — Single option (straightforward swap)**:
+
+The Gemini `generateContent` streaming API is a simple REST call. No SDK needed. The changes are confined to `chat-loader.js` and are minimal:
+
+#### What Changes
+
+| Area | Before (Azure OpenAI) | After (Google Gemini) |
+|------|----------------------|----------------------|
+| **Setup form** | Endpoint URI + API Key | API Key only (endpoint is fixed) |
+| **API endpoint** | User-provided full URL | `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key={KEY}` |
+| **Auth** | `api-key` header | API key in query string |
+| **Request body** | `{ model, input, instructions, stream }` (Responses API) | `{ system_instruction: {parts: [{text}]}, contents: [{role, parts: [{text}]}], generationConfig }` |
+| **SSE response** | `data: {"delta": "..."}` or `choices[0].delta.content` | `data: {"candidates": [{"content": {"parts": [{"text": "..."}]}}]}` |
+| **Footer text** | "Powered by Azure OpenAI GPT-5.2" | "Powered by Google Gemini" |
+| **localStorage key** | `aoai-config` | `gemini-config` |
+
+#### What Stays the Same
+- Azure SWA workflow (`.github/workflows/azure-static-web-apps-polite-river-06e40841e.yml`) — untouched
+- Azure SWA embedded config path (`chat-config.json` with `endpointUri` + `apiKey`) — untouched
+- `deploy.yml` (GitHub Pages) — no changes needed (doesn't inject config)
+- Content bundle, markdown rendering, sidebar UI layout, message history — all unchanged
+- The embedded config codepath (for Azure SWA) still works with Azure OpenAI format
+
+#### Dual-backend Strategy
+The chat-loader.js will support **two backends**:
+1. **Embedded config** (`chat-config.json` exists → Azure SWA): Uses Azure OpenAI path (existing code)
+2. **localStorage config** (no embedded config → GitHub Pages): Uses Gemini path (new code)
+
+This means we keep the existing Azure OpenAI `streamChat` logic for the SWA deployment and add a separate `streamChatGemini` function for the GitHub Pages path. The `sendMessage` function picks the right one based on whether `embeddedConfig` is set.
+
+#### Files Modified
+1. **`public/chat-loader.js`** — All changes here:
+   - Add `streamChatGemini()` function (Gemini API format)
+   - Update `sendMessage()` to pick Gemini vs Azure based on config source
+   - Simplify setup form: single "API Key" field (no endpoint URI)
+   - Update placeholder text, labels, footer
+   - Change `CONFIG_STORAGE` key to `gemini-config`
+
+#### Success Criteria
+- [ ] GitHub Pages chat works with a Google AI Studio API key
+- [ ] Azure SWA chat still works with Azure OpenAI (no regression)
+- [ ] Setup form shows only API key field (simpler UX)
+- [ ] Streaming responses render correctly with markdown
+
+**Rationale**: Gemini 2.0 Flash is free-tier eligible, fast, and the user already has access via Google AI Studio. The API is simple (REST + SSE), no SDK needed. Keeping Azure OpenAI for the SWA path avoids breaking that deployment.
+
+**Impact**: Only `chat-loader.js` changes. No build config, no new dependencies, no workflow changes.
+
 ## Open Questions
 - ~~Should we add a "Glossary" page?~~ **Yes — included**
 - ~~Should modules have reflection questions?~~ **Yes — "Reflect & Apply" section added to each module**

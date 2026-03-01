@@ -1,263 +1,136 @@
-# Execution Plan: Playwright E2E Testing Loop
+# Execution Plan: Switch GitHub Pages Chat to Google Gemini
 
-**Created**: 2026-02-16
-**Last Updated**: 2026-02-16
+**Created**: 2026-03-01
+**Last Updated**: 2026-03-01
 **Status**: Not Started
 
 ## Overview
 
-Add end-to-end testing with Playwright that verifies all 9 pages render correctly, navigation works, interactive elements (sidebar, search, chat widget) function, and the site builds without errors. The test suite runs against the **live Azure SWA deployment** (`https://polite-river-06e40841e.6.azurestaticapps.net`) and includes **visual regression screenshots** to catch unintended UI changes.
+Replace Azure OpenAI with Google Gemini 2.0 Flash for the GitHub Pages chat sidebar. Azure SWA deployment stays on Azure OpenAI. Only `public/chat-loader.js` changes — no new dependencies, no workflow changes.
 
 ## Architecture Reference
 
-No `ARCHITECTURE.md` for testing — this plan is derived from codebase exploration of the Astro + Starlight site (9 pages, chat sidebar, Starlight navigation/search).
+See `ARCHITECTURE.md` → Decision Log → "2026-03-01: GitHub Pages Chat — Switch from Azure OpenAI to Google Gemini"
 
 ---
 
 ## Phases
 
-### Phase 1: Scaffold Playwright Infrastructure
+### Phase 1: Add Gemini Streaming Function
 **Status**: ⬜ Not Started
 **Prerequisites**: None
 **Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 1.1**: Install Playwright as a dev dependency
-  - **Details**: `npm i -D @playwright/test` then `npx playwright install --with-deps chromium` (Chromium only to keep it fast)
-  - **Success Criteria**: `npx playwright --version` succeeds
-
-- [ ] **Task 1.2**: Create `playwright.config.ts`
-  - **Files**: `playwright.config.ts`
-  - **Details**: Configure:
-    - `baseURL`: `https://polite-river-06e40841e.6.azurestaticapps.net` (live Azure SWA)
-    - No `webServer` needed — tests run against the live deployment
-    - `projects`: Chromium only (lightweight)
-    - `retries`: 1 on CI, 0 locally
-    - `outputDir`: `test-results/`
-    - `expect.toHaveScreenshot`: configure with `maxDiffPixelRatio: 0.01` for visual regression tolerance
-    - `snapshotPathTemplate`: `{testDir}/__screenshots__/{testFilePath}/{arg}{ext}` for organized baseline storage
-  - **Success Criteria**: Config file exists and Playwright recognizes it
-
-- [ ] **Task 1.3**: Add npm scripts for testing
-  - **Files**: `package.json`
-  - **Details**: Add `"test": "playwright test"` and `"test:ui": "playwright test --ui"`
-  - **Success Criteria**: `npm test` invokes Playwright
-
-- [ ] **Task 1.4**: Update `.gitignore` for test artifacts
-  - **Files**: `.gitignore`
-  - **Details**: Add `test-results/`, `playwright-report/`, `blob-report/`. Do NOT ignore `tests/__screenshots__/` — baseline screenshots must be committed to git.
-  - **Success Criteria**: Test artifacts excluded from git, but screenshot baselines tracked
-
-#### Checkpoint
-- [ ] `npm test` runs Playwright (even with no tests yet)
-- [ ] No changes to existing site functionality
-
----
-
-### Phase 2: Smoke Loop — Every Page Renders
-**Status**: ⬜ Not Started
-**Prerequisites**: Phase 1
-**Estimated Scope**: Medium
-
-This is the core "testing loop" — a data-driven test that iterates over every route.
-
-#### Tasks
-- [ ] **Task 2.1**: Create data-driven smoke test for all 9 pages
-  - **Files**: `tests/smoke.spec.ts`
-  - **Details**: Define a routes array, then loop with `test.describe` / `for...of`:
-    ```ts
-    const pages = [
-      { path: '/', title: 'Onboarding Guide' },
-      { path: '/module-1-pipelines-and-observability/', title: 'Data Pipelines' },
-      { path: '/module-2-industry-landscape/', title: 'Industry Landscape' },
-      { path: '/module-3-google-ecosystem/', title: 'Google' },
-      { path: '/module-4-ml-ai-infrastructure/', title: 'ML/AI' },
-      { path: '/module-5-ai-first-strategy/', title: 'AI-First' },
-      { path: '/module-6-ai-observability/', title: 'Observability' },
-      { path: '/module-7-developer-experience/', title: 'Developer Experience' },
-      { path: '/glossary/', title: 'Glossary' },
-    ];
-    for (const pg of pages) {
-      test(`${pg.path} loads and renders`, ...);
+- [ ] **Task 1.1**: Add `streamChatGemini()` function
+  - **Files**: `public/chat-loader.js`
+  - **Details**: New function that calls the Gemini `streamGenerateContent` API with SSE streaming. Request format:
+    ```json
+    {
+      "system_instruction": {"parts": [{"text": "system prompt + content"}]},
+      "contents": [{"role": "user"|"model", "parts": [{"text": "..."}]}],
+      "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048}
     }
     ```
-    For each page: navigate, assert `<main>` visible, assert title contains expected substring.
-  - **Success Criteria**: All 9 pages return 200 and render `<main>`
+    Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key={API_KEY}`
+    SSE parse: extract `candidates[0].content.parts[0].text` from each `data:` line.
+  - **Success Criteria**: Function exists and handles streaming + error cases
 
-- [ ] **Task 2.2**: Assert no console errors on any page
-  - **Files**: `tests/smoke.spec.ts` (extend)
-  - **Details**: Attach `page.on('console')` listener, collect `error`-level entries, assert zero per page
-  - **Success Criteria**: Zero unexpected console errors across all pages
+- [ ] **Task 1.2**: Update `sendMessage()` to route between backends
+  - **Files**: `public/chat-loader.js`
+  - **Details**: If `embeddedConfig` is set (Azure SWA), use existing `streamChat()`. Otherwise (GitHub Pages / localStorage), use new `streamChatGemini()`. The config object for Gemini only needs `apiKey`.
+  - **Success Criteria**: Correct function is called based on config source
 
 #### Checkpoint
-- [ ] `npm test` passes with 9+ green tests
-- [ ] Every page confirmed renderable in headless Chromium
+- [ ] Gemini streaming function implemented
+- [ ] Azure SWA path still uses existing `streamChat()`
+- [ ] GitHub Pages path uses `streamChatGemini()`
 
 ---
 
-### Phase 3: Navigation & Sidebar Tests
+### Phase 2: Update Setup Form UI
 **Status**: ⬜ Not Started
-**Prerequisites**: Phase 2
-**Estimated Scope**: Medium
+**Prerequisites**: Phase 1
+**Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 3.1**: Test sidebar navigation links
-  - **Files**: `tests/navigation.spec.ts`
-  - **Details**: Start on Dashboard → click each sidebar "Study Modules" link → assert URL changes → assert `<h1>` matches module title
-  - **Success Criteria**: All 7 module links navigate correctly
+- [ ] **Task 2.1**: Simplify setup form — API key only
+  - **Files**: `public/chat-loader.js`
+  - **Details**: Remove the "Endpoint URI" input field from the setup HTML. Keep only the API Key field. Update heading to "Connect to Google Gemini", update description text, update placeholder to "Your Google AI Studio API key".
+  - **Success Criteria**: Setup form shows one field (API key), no endpoint URI field
 
-- [ ] **Task 3.2**: Test Dashboard card links
-  - **Files**: `tests/navigation.spec.ts`
-  - **Details**: On Dashboard, click CardGrid links + "Start with Module 1" hero button → verify correct destination
-  - **Success Criteria**: All dashboard cards route correctly
+- [ ] **Task 2.2**: Update `bindEvents()` for single-field config
+  - **Files**: `public/chat-loader.js`
+  - **Details**: The save handler should store `{ apiKey }` only (no `endpointUri`). Update the validation to only check `apiKey`. Change `CONFIG_STORAGE` from `aoai-config` to `gemini-config`.
+  - **Success Criteria**: Config saves/loads correctly with just `apiKey`
 
-- [ ] **Task 3.3**: Test Starlight search
-  - **Files**: `tests/navigation.spec.ts`
-  - **Details**: Open search (`Ctrl+K`), type "pipeline", assert results appear, click a result → verify navigation
-  - **Success Criteria**: Search works end-to-end
+- [ ] **Task 2.3**: Update branding text
+  - **Files**: `public/chat-loader.js`
+  - **Details**:
+    - File header comment: "Calls Google Gemini" instead of "Calls Azure OpenAI GPT-4o"
+    - Footer: "Powered by Google Gemini" instead of "Powered by Azure OpenAI GPT-5.2"
+    - Error message: "Gemini API error" instead of "Azure OpenAI error"
+    - Remove "API_VERSION no longer needed" comment (not relevant)
+  - **Success Criteria**: All user-visible text references Gemini, not Azure OpenAI
 
 #### Checkpoint
-- [ ] All navigation paths verified
-- [ ] Site fully navigable via sidebar, cards, and search
+- [ ] Setup form has single API key field
+- [ ] Footer says "Powered by Google Gemini"
+- [ ] All Azure OpenAI references removed from GitHub Pages path
+- [ ] Azure SWA embedded config path still works (untouched)
 
 ---
 
-### Phase 4: Chat Widget Tests
-**Status**: ⬜ Not Started
-**Prerequisites**: Phase 2
-**Estimated Scope**: Medium
-
-#### Tasks
-- [ ] **Task 4.1**: Test chat widget renders on every page
-  - **Files**: `tests/chat.spec.ts`
-  - **Details**: Visit each page → assert chat container is visible → assert setup screen appears (no stored credentials in test browser)
-  - **Success Criteria**: Chat widget DOM present on all 9 pages
-
-- [ ] **Task 4.2**: Test chat setup form interaction
-  - **Files**: `tests/chat.spec.ts`
-  - **Details**: Fill endpoint URI + API key with dummy values → submit → assert transition from setup to chat interface → assert composer textarea visible
-  - **Success Criteria**: Setup form works and transitions to chat view
-
-- [ ] **Task 4.3**: Test chat send + error handling (no real API)
-  - **Files**: `tests/chat.spec.ts`
-  - **Details**: After dummy setup, type message → send → assert user message appears → assert graceful error (API fails with dummy creds, should show error message not crash)
-  - **Success Criteria**: Chat handles failed API calls gracefully
-
-#### Checkpoint
-- [ ] Chat widget verified on all pages
-- [ ] Chat UI tested: setup → compose → send → error handling
-
----
-
-### Phase 5: Content Integrity Tests
+### Phase 3: Update CSS for Removed Input
 **Status**: ⬜ Not Started
 **Prerequisites**: Phase 2
 **Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 5.1**: Verify each module has expected structural elements
-  - **Files**: `tests/content.spec.ts`
-  - **Details**: For each module: assert `<h1>` exists, "About This Module" heading exists, at least one content section
-  - **Success Criteria**: All modules have key structural elements
-
-- [ ] **Task 5.2**: Verify glossary has alphabetical sections
-  - **Files**: `tests/content.spec.ts`
-  - **Details**: Visit `/glossary/` → assert multiple `<h2>` letter headings → assert 10+ terms present
-  - **Success Criteria**: Glossary renders correctly
-
-- [ ] **Task 5.3**: Verify content-bundle.json is accessible and valid
-  - **Files**: `tests/content.spec.ts`
-  - **Details**: Fetch `/content-bundle.json` → assert 200 → assert valid JSON → assert entries for all 7 modules
-  - **Success Criteria**: Chat's content bundle is complete
+- [ ] **Task 3.1**: Clean up CSS selectors
+  - **Files**: `public/chat-loader.js`
+  - **Details**: The `#chat-endpoint-uri` CSS selectors can be removed since that input no longer exists. Update the CSS selectors that reference it (the shared styles with `#chat-key-input`).
+  - **Success Criteria**: No orphaned CSS selectors, key input still styled correctly
 
 #### Checkpoint
-- [ ] Content structure validated across all modules and glossary
-- [ ] Content bundle verified for chat feature
+- [ ] No dead CSS for removed elements
+- [ ] Setup form looks clean with single input
 
 ---
 
-### Phase 6: Visual Regression Screenshots
+### Phase 4: Verify Both Deployments
 **Status**: ⬜ Not Started
-**Prerequisites**: Phase 2
-**Estimated Scope**: Medium
-
-#### Tasks
-- [ ] **Task 6.1**: Add full-page screenshot baselines for all 9 pages
-  - **Files**: `tests/visual.spec.ts`
-  - **Details**: Data-driven test (same routes array as smoke). For each page:
-    1. Navigate and wait for `networkidle` (ensures CDN assets like marked.js load)
-    2. Hide dynamic elements that cause flaky diffs (e.g., chat widget cursor blink) via `page.addStyleRule` or mask option
-    3. `await expect(page).toHaveScreenshot('page-name.png', { fullPage: true })`
-    4. First run with `--update-snapshots` to generate baselines
-  - **Success Criteria**: Baseline screenshots generated and committed for all 9 pages
-
-- [ ] **Task 6.2**: Add component-level screenshot tests for key UI elements
-  - **Files**: `tests/visual.spec.ts`
-  - **Details**: Targeted screenshots of:
-    - Dashboard hero section (`.hero` locator)
-    - Dashboard CardGrid (module cards)
-    - Sidebar navigation panel
-    - Chat widget setup screen
-    - Chat widget after dummy login (chat interface)
-  - **Success Criteria**: Component baselines generated for 5 key UI areas
-
-- [ ] **Task 6.3**: Document the visual regression workflow
-  - **Files**: `tests/README.md`
-  - **Details**: Short doc explaining:
-    - How to update baselines: `npx playwright test --update-snapshots`
-    - When to update: after intentional UI changes
-    - How to review diffs: `npx playwright show-report`
-    - Tolerance config (`maxDiffPixelRatio: 0.01`)
-  - **Success Criteria**: Any team member can understand the screenshot workflow
-
-#### Checkpoint
-- [ ] All 9 pages have full-page baseline screenshots committed
-- [ ] 5 component-level baselines committed
-- [ ] `npm test` catches visual regressions (modify CSS → test fails)
-
----
-
-### Phase 7: CI Integration
-**Status**: ⬜ Not Started
-**Prerequisites**: Phase 6
+**Prerequisites**: Phase 3
 **Estimated Scope**: Small
 
 #### Tasks
-- [ ] **Task 7.1**: Add Playwright GitHub Actions workflow
-  - **Files**: `.github/workflows/test.yml`
-  - **Details**: Trigger on PR + push to main → Node 20 → `npm ci` → `npx playwright install --with-deps chromium` → `npm test` → upload `playwright-report/` as artifact (always, so visual diffs are reviewable)
-  - **Success Criteria**: Tests run automatically on PRs
+- [ ] **Task 4.1**: Test GitHub Pages path with Gemini API key
+  - **Details**: Open the site on GitHub Pages, enter a Google AI Studio API key, send a question, verify streaming response renders correctly with markdown.
+  - **Success Criteria**: Chat works end-to-end with Gemini
 
-- [ ] **Task 7.2**: Handle screenshot baseline updates in CI
-  - **Files**: `.github/workflows/test.yml`
-  - **Details**: Add a step that uploads the `test-results/` directory as an artifact when visual tests fail, so reviewers can download and compare the actual vs expected screenshots. Add a comment to the workflow explaining how to update baselines locally.
-  - **Success Criteria**: Visual diff artifacts downloadable from failed CI runs
+- [ ] **Task 4.2**: Verify Azure SWA path is unchanged
+  - **Details**: Confirm the embedded config codepath (`loadEmbeddedConfig` → `streamChat`) is untouched. The Azure SWA deployment should still call Azure OpenAI.
+  - **Success Criteria**: No changes to embedded config logic or Azure OpenAI streaming function
 
 #### Checkpoint
-- [ ] Tests pass in CI against live Azure SWA URL
-- [ ] Visual regression failures produce downloadable diff artifacts
+- [ ] GitHub Pages chat works with Gemini
+- [ ] Azure SWA chat unaffected
+- [ ] All done
 
 ---
 
 ## Risk & Mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Azure SWA site is down/unreachable | Low | High | Tests will fail with clear network error; retry in CI with `retries: 1` |
-| Chat loads CDNs (marked.js, DOMPurify) | Medium | Medium | Use `networkidle` waits; increase timeout for CDN-dependent pages |
-| Screenshot flakiness (font rendering, anti-aliasing) | High | Medium | Use `maxDiffPixelRatio: 0.01` tolerance; mask dynamic elements (cursors, timestamps); run baselines on same OS as CI (Linux) |
-| Azure SWA deployment lags behind `main` | Medium | Low | Tests verify what's actually deployed, not what's in git — this is a feature |
-| Chat widget auto-config on Azure SWA (has real API key) | Medium | Medium | Chat tests use fresh browser context (no stored config); chat auto-loads `chat-config.json` on SWA so setup screen may be skipped — tests must handle both flows |
-| Windows vs Linux screenshot baselines differ | High | Medium | Generate baselines in CI (Linux) and commit those; local devs on Windows use `--update-snapshots` or skip visual tests |
+| Risk | Likelihood | Impact | Mitigation Strategy |
+|------|------------|--------|-------------------|
+| Gemini SSE format differs from expected | Low | Med | Test with real API key; Gemini docs are clear on format |
+| CORS issues calling Gemini from browser | Low | Low | Gemini API allows browser calls with API key in query string |
+| Old localStorage config (`aoai-config`) lingers | Low | Low | New key (`gemini-config`) means clean start; old key ignored |
 
 ## Open Questions
 
-- [x] ~~Should we test against live Azure SWA or local preview?~~ → **Live Azure SWA** (`https://polite-river-06e40841e.6.azurestaticapps.net`)
-- [x] ~~Visual regression screenshots or just functional?~~ → **Both**: functional tests + full-page and component-level visual regression
+None — approach is well-defined.
 
 ## Notes & Decisions
 
-- **2026-02-16**: Plan created. Chromium-only to keep tests fast (~30s target). Can add Firefox/WebKit later.
-- **2026-02-16**: Decided to test against live Azure SWA URL instead of local preview. This tests the real deployment, including auto-configured chat. No need for `webServer` config.
-- **2026-02-16**: Added visual regression Phase 6 with full-page screenshots for all 9 pages + component-level screenshots for 5 key UI areas. Baselines committed to git.
-- **Testing philosophy**: "Smoke loop" pattern — hit every page first, then layer interaction + visual tests. Fast feedback over exhaustive coverage.
+- **2026-03-01**: Plan created from ARCHITECTURE.md decision log. Single-file change, 4 small phases.
