@@ -398,4 +398,73 @@ If this were a production project at Google, the next steps would be:
 
 ---
 
+## The Orchestrator Agent: Teaching an AI to Run a Project
+
+One of the most interesting things we built wasn't a feature for the website — it was a way to make the AI build things *smarter*.
+
+### The Problem With Skills
+
+We started with four separate "skills" — think of them like individual workers on a factory floor:
+
+1. **Brainstorm** — the architect who designs the building
+2. **Plan** — the project manager who creates the schedule
+3. **Execute** — the construction crew who builds it
+4. **Review** — the inspector who checks the work
+
+Each one is excellent at their job. But someone had to stand in the middle shouting "OK architect, you're done — project manager, your turn!" That someone was you, running `/brainstorm`, then `/plan`, then `/execute`, then `/review` one at a time.
+
+This is like hiring four brilliant specialists and then spending all your time coordinating them. The coordination overhead eats the productivity gains.
+
+### The Insight: Documents as a State Machine
+
+Here's the key idea that makes the orchestrator work: **the project's documents tell you exactly where you are in the process.**
+
+- No `VISION.md`? You haven't started yet.
+- `VISION.md` exists but no `ROADMAP.md`? You know what to build but haven't planned the versions.
+- `mvp/ARCHITECTURE.md` exists but no `mvp/EXECUTION_PLAN.md`? Architecture is done, planning hasn't started.
+- `mvp/TASKS.md` has unchecked items? Execution is in progress.
+
+This is called a **state machine** — a system where the current state determines the next action. The elegant part: the state isn't stored in memory (which would be lost when you close the terminal). It's stored in files on disk. You can walk away, come back a week later, and the orchestrator reads the files and picks up exactly where it left off.
+
+This is the same pattern that makes tools like Git so powerful. Git doesn't remember what you were doing — it reads the state of the repository and figures it out.
+
+### Skills vs. Agents: A Useful Distinction
+
+We debated whether this should be a "skill" (a prompt template that runs in your conversation) or an "agent" (an autonomous subprocess). The answer turned out to be: **it's a skill that thinks like an agent.**
+
+A skill can ask you questions mid-run (`AskUserQuestion`). An agent can't — it runs autonomously and returns a result. Since the orchestrator needs to pause at key moments (approve the architecture, choose which bugs to fix), it has to be a skill. But between those checkpoints, it operates autonomously, just like an agent would.
+
+This is a pattern you'll see in real engineering: **autonomy between checkpoints, human judgment at decision points.** Self-driving cars do this — they drive autonomously but hand control back to the human for situations they can't handle. CI/CD pipelines do this — they run tests automatically but require human approval before deploying to production.
+
+### The Checkpoint Strategy
+
+Not all decisions are equal. Approving the vision (what are we building?) is a much higher-stakes decision than approving a task list. Get the vision wrong, and everything downstream is wasted work. Get a task order slightly wrong, and you just rearrange some work.
+
+The orchestrator only pauses at **high-leverage moments**:
+- Vision approval (everything depends on this)
+- Roadmap approval (version scoping is hard to change later)
+- Architecture approval (design mistakes are expensive)
+- Review triage (you decide the quality bar)
+- Version completion (natural transition point)
+
+Everything else — creating plans, implementing tasks, running tests — is autonomous. This is the **minimum viable human involvement** principle: involve the human where their judgment is irreplaceable, automate everything else.
+
+### The Versioning Model
+
+The orchestrator supports building incrementally: MVP → v1 → v2. Each version goes through the full cycle (brainstorm → plan → execute → review → retro), and between versions there's a **retrospective** — a structured look at what worked and what didn't.
+
+The retro is what turns a linear pipeline into a learning system. Without it, v1 just repeats MVP's mistakes at larger scale. With it, each version builds on the lessons of the previous one.
+
+### Lessons From This
+
+1. **State machines are everywhere.** Once you see them, you can't unsee them. A shopping cart is a state machine (empty → items added → checkout → paid). An HTTP request is a state machine (connecting → sending → waiting → receiving). When you need to track "where am I in a process," think state machine first.
+
+2. **Documents beat memory.** Any system that relies on in-memory state is fragile — restart the process and the state is gone. Persisting state to files (or a database) makes systems resilient. This is why databases exist.
+
+3. **Autonomy needs guardrails.** Fully autonomous systems are fast but dangerous. Fully manual systems are safe but slow. The sweet spot is autonomy between well-chosen checkpoints.
+
+4. **The meta-work is real work.** Building a system to build systems isn't wasted effort — it's leverage. Every future project on this repo benefits from the orchestrator. This is what senior engineers mean when they talk about "force multipliers."
+
+---
+
 *This document was written as part of the build process and updated as features were added. It covers the project from conception through deployment, including the bugs, the decisions, and the lessons. If something about the project confuses you, this is the place to start.*

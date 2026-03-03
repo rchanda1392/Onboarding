@@ -29,11 +29,11 @@ There are two dominant paradigms:
 graph LR
     subgraph ETL["ETL (Traditional)"]
         direction LR
-        A1[Sources] --> B1[Extract] --> C1[Transform\nin staging] --> D1[Load] --> E1[Data\nWarehouse]
+        A1[Sources] --> B1[Extract] --> C1[Transform<br/>in staging] --> D1[Load] --> E1[Data<br/>Warehouse]
     end
     subgraph ELT["ELT (Modern)"]
         direction LR
-        A2[Sources] --> B2[Extract] --> D2[Load raw] --> E2[Data\nWarehouse] --> C2[Transform\nin place]
+        A2[Sources] --> B2[Extract] --> D2[Load raw] --> E2[Data<br/>Warehouse] --> C2[Transform<br/>in place]
     end
 ```
 
@@ -46,11 +46,11 @@ Pipelines also differ by timing:
 graph LR
     subgraph Batch["Batch Processing"]
         direction LR
-        BA[Data\naccumulates] --> BB[Scheduled\ntrigger] --> BC[Process\nbatch] --> BD[Output]
+        BA[Data<br/>accumulates] --> BB[Scheduled<br/>trigger] --> BC[Process<br/>batch] --> BD[Output]
     end
     subgraph Stream["Streaming (Real-time)"]
         direction LR
-        SA[Events\narrive] --> SB[Process\nimmediately] --> SC[Output\ncontinuously]
+        SA[Events<br/>arrive] --> SB[Process<br/>immediately] --> SC[Output<br/>continuously]
     end
 ```
 
@@ -72,7 +72,7 @@ graph LR
 
 ```mermaid
 mindmap
-  root((Data\nObservability))
+  root((Data<br/>Observability))
     Freshness
       Is the data up to date?
     Volume
@@ -128,9 +128,9 @@ To manage data quality at scale, teams borrow from site reliability engineering 
 
 ```mermaid
 graph TB
-    SLA["SLA — Business Promise\n99.9% data freshness guaranteed"]
-    SLO["SLO — Internal Target\nData updated within 15 min, 99.95%"]
-    SLI["SLI — Measured Metric\nActual update latency = 12 min"]
+    SLA["SLA — Business Promise<br/>99.9% data freshness guaranteed"]
+    SLO["SLO — Internal Target<br/>Data updated within 15 min, 99.95%"]
+    SLI["SLI — Measured Metric<br/>Actual update latency = 12 min"]
     SLA --> SLO --> SLI
 ```
 
@@ -174,7 +174,7 @@ graph LR
         D4[Schema]
         D5[Lineage]
     end
-    Software --- Common["Shared goal:\nDetect silent failures\nbefore users notice"]
+    Software --- Common["Shared goal:<br/>Detect silent failures<br/>before users notice"]
     Data --- Common
 ```
 

@@ -24,11 +24,11 @@ This module gives you the competitive landscape — what's out there, what works
 
 ```mermaid
 graph TB
-    CS["Cloud Services Layer\nQuery optimization, security, metadata"]
-    QP["Compute Layer\nVirtual Warehouse 1 · Virtual Warehouse 2 · Virtual Warehouse N"]
-    ST["Storage Layer\nMicro-partitions, columnar, compressed"]
+    CS["Cloud Services Layer<br/>Query optimization, security, metadata"]
+    QP["Compute Layer<br/>Virtual Warehouse 1 · Virtual Warehouse 2 · Virtual Warehouse N"]
+    ST["Storage Layer<br/>Micro-partitions, columnar, compressed"]
     CS --> QP --> ST
-    Note["Compute and Storage\nscale independently"]
+    Note["Compute and Storage<br/>scale independently"]
     QP -.- Note
     ST -.- Note
 ```
@@ -64,12 +64,12 @@ graph TB
 
 ```mermaid
 graph TB
-    RD["Raw Data\nData Lake — any format, any scale"]
-    DL["Delta Lake\nACID transactions, versioning, schema enforcement"]
-    UC["Unity Catalog\nGovernance, lineage, access control"]
-    WL["Analytics & ML Workloads\nDatabricks SQL · MLflow · Notebooks"]
+    RD["Raw Data<br/>Data Lake — any format, any scale"]
+    DL["Delta Lake<br/>ACID transactions, versioning, schema enforcement"]
+    UC["Unity Catalog<br/>Governance, lineage, access control"]
+    WL["Analytics & ML Workloads<br/>Databricks SQL · MLflow · Notebooks"]
     RD --> DL --> UC --> WL
-    Note["Lakehouse = Data Lake flexibility\n+ Warehouse reliability"]
+    Note["Lakehouse = Data Lake flexibility<br/>+ Warehouse reliability"]
     DL -.- Note
 ```
 
@@ -103,7 +103,7 @@ Beyond the platform-native tools from Snowflake and Databricks, a rich ecosystem
 
 ```mermaid
 mindmap
-  root((Observability\nTools Ecosystem))
+  root((Observability<br/>Tools Ecosystem))
     Data Quality Testing
       Great Expectations
       Soda
@@ -154,7 +154,7 @@ What can you take from the external landscape and apply to your internal observa
 
 ```mermaid
 mindmap
-  root((Lessons\nfor Google))
+  root((Lessons<br/>for Google))
     Governance-first design
       Build observability into the platform from day one
     Multi-signal observability

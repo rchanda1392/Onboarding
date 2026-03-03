@@ -72,9 +72,9 @@ The internal query engine that became the foundation for **BigQuery**. Dremel in
 ```mermaid
 graph TB
     UQ["User Query — just write SQL"]
-    DR["Dremel\nDistributed execution engine"]
-    CO["Colossus\nDistributed file system"]
-    JU["Jupiter\nPetabit network fabric"]
+    DR["Dremel<br/>Distributed execution engine"]
+    CO["Colossus<br/>Distributed file system"]
+    JU["Jupiter<br/>Petabit network fabric"]
     UQ --> DR --> CO --> JU
     SL["Serverless — no clusters to provision"]
     DR -.- SL
@@ -110,7 +110,7 @@ Understanding how Google engineers work helps you understand the context for the
 
 ```mermaid
 mindmap
-  root((Google Engineering\nCulture))
+  root((Google Engineering<br/>Culture))
     Code Review
       Every change reviewed via Critique
     Monorepo
@@ -155,14 +155,14 @@ Your team manages pipelines for two of Google's most important data domains: Goo
 
 ```mermaid
 graph LR
-    S1["Satellite\nImagery"] --> ING[Ingestion]
-    S2["Street View\nCars"] --> ING
-    S3["User\nReports"] --> ING
-    S4["Traffic\nSensors"] --> ING
-    S5["Business\nListings"] --> ING
-    ING --> PROC["Processing\n& Fusion"]
-    PROC --> VER["Verification\nAutomated + Human"]
-    VER --> SERV["Serving\nGoogle Maps App"]
+    S1["Satellite<br/>Imagery"] --> ING[Ingestion]
+    S2["Street View<br/>Cars"] --> ING
+    S3["User<br/>Reports"] --> ING
+    S4["Traffic<br/>Sensors"] --> ING
+    S5["Business<br/>Listings"] --> ING
+    ING --> PROC["Processing<br/>& Fusion"]
+    PROC --> VER["Verification<br/>Automated + Human"]
+    VER --> SERV["Serving<br/>Google Maps App"]
 ```
 
 Google Maps is one of the most data-intensive products in the world. It processes data from:

@@ -29,12 +29,12 @@ The intersection of AI and data observability is where the most transformative p
 
 ```mermaid
 graph LR
-    UQ["User Question\nWhich pipelines failed yesterday?"]
-    LLM["LLM\n+ schema context"]
-    SQL["Generated\nSQL Query"]
-    DB["Database\nExecution"]
+    UQ["User Question<br/>Which pipelines failed yesterday?"]
+    LLM["LLM<br/>+ schema context"]
+    SQL["Generated<br/>SQL Query"]
+    DB["Database<br/>Execution"]
     RES["Results"]
-    NL["Natural Language\nAnswer"]
+    NL["Natural Language<br/>Answer"]
     UQ --> LLM --> SQL --> DB --> RES --> NL
 ```
 
@@ -68,12 +68,12 @@ Static thresholds ("alert if latency > 5 minutes") don't scale. When you have th
 
 ```mermaid
 graph LR
-    PM["Pipeline\nMetrics"] --> FE["Feature\nExtraction"] --> ML["ML Model\nIsolation Forest\nAutoencoder\nProphet"]
-    ML --> SC["Anomaly\nScore"]
-    SC --> DEC{"Alert or\nSuppress?"}
-    DEC -->|Alert| AL["Alert\nEngineers"]
+    PM["Pipeline<br/>Metrics"] --> FE["Feature<br/>Extraction"] --> ML["ML Model<br/>Isolation Forest<br/>Autoencoder<br/>Prophet"]
+    ML --> SC["Anomaly<br/>Score"]
+    SC --> DEC{"Alert or<br/>Suppress?"}
+    DEC -->|Alert| AL["Alert<br/>Engineers"]
     DEC -->|Suppress| NR["No Action"]
-    AL --> FB["Human\nFeedback"] --> ML
+    AL --> FB["Human<br/>Feedback"] --> ML
 ```
 
 ### How ML anomaly detection works for data pipelines:
@@ -164,10 +164,10 @@ graph LR
     ST["Source Tables"] --> AI["AI Analysis"]
     QL["Query Logs"] --> AI
     CD["Code"] --> AI
-    AI --> DESC["Column\nDescriptions"]
-    AI --> DOCS["Usage\nDocumentation"]
-    AI --> LIN["Lineage\nGraph"]
-    DESC --> CAT["Data\nCatalog"]
+    AI --> DESC["Column<br/>Descriptions"]
+    AI --> DOCS["Usage<br/>Documentation"]
+    AI --> LIN["Lineage<br/>Graph"]
+    DESC --> CAT["Data<br/>Catalog"]
     DOCS --> CAT
     LIN --> CAT
 ```

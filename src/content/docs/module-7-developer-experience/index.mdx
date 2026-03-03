@@ -24,7 +24,7 @@ This is where the rubber meets the road: how do you take everything from Modules
 
 ```mermaid
 mindmap
-  root((Developer\nExperience))
+  root((Developer<br/>Experience))
     Feedback Loops
       Build time
       Test speed
@@ -75,10 +75,10 @@ The IDE is where developers spend most of their working hours. Bringing observab
 
 ```mermaid
 graph TB
-    IDE["IDE\nVS Code / JetBrains / Cider"]
-    EXT["Extension / Plugin\nInline health · Hover info · Quick actions"]
-    API["API Layer\nREST / gRPC"]
-    OBS["Observability Platform\nMetrics · Alerts · Lineage"]
+    IDE["IDE<br/>VS Code / JetBrains / Cider"]
+    EXT["Extension / Plugin<br/>Inline health · Hover info · Quick actions"]
+    API["API Layer<br/>REST / gRPC"]
+    OBS["Observability Platform<br/>Metrics · Alerts · Lineage"]
     IDE --> EXT --> API --> OBS
 ```
 
@@ -133,11 +133,11 @@ A well-designed CLI lets developers:
 
 ```mermaid
 graph LR
-    CD["Code"] --> PC["Pre-commit\nData quality checks"]
-    PC --> PR["PR Review\nSchema validation"]
-    PR --> CI["CI Pipeline\nIntegration tests"]
+    CD["Code"] --> PC["Pre-commit<br/>Data quality checks"]
+    PC --> PR["PR Review<br/>Schema validation"]
+    PR --> CI["CI Pipeline<br/>Integration tests"]
     CI --> DP["Deploy"]
-    DP --> MO["Post-deploy\nMonitoring"]
+    DP --> MO["Post-deploy<br/>Monitoring"]
     SL["Shift Left: Catch issues earlier <<<"] -.- PC
     SL -.- PR
 ```
@@ -168,11 +168,11 @@ The most successful developer tools don't ask developers to change their workflo
 
 ```mermaid
 graph TB
-    AW["Awareness\nDocs, talks, demos"]
-    TR["Trial\nEasy setup, quick wins"]
-    INT["Integration\nFits existing workflow"]
-    HAB["Habit\nDaily use, muscle memory"]
-    ADV["Advocacy\nRecommends to others"]
+    AW["Awareness<br/>Docs, talks, demos"]
+    TR["Trial<br/>Easy setup, quick wins"]
+    INT["Integration<br/>Fits existing workflow"]
+    HAB["Habit<br/>Daily use, muscle memory"]
+    ADV["Advocacy<br/>Recommends to others"]
     AW --> TR --> INT --> HAB --> ADV
 ```
 

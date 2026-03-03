@@ -24,7 +24,7 @@ Before diving into infrastructure, let's walk through what it actually looks lik
 
 ```mermaid
 graph LR
-    PF["Problem\nFraming"] --> DE["Data\nExploration"] --> FE["Feature\nEngineering"]
+    PF["Problem<br/>Framing"] --> DE["Data<br/>Exploration"] --> FE["Feature<br/>Engineering"]
     FE --> EX["Experimentation"] --> EV["Evaluation"] --> PR["Productionization"]
     subgraph eighty["~80% of time spent here"]
         PF
@@ -109,7 +109,7 @@ Google has a unique advantage here: products like Maps, Search, YouTube, and Gma
 
 ```mermaid
 mindmap
-  root((Training Data\nSources))
+  root((Training Data<br/>Sources))
     Human Annotation
       High quality, expensive
     Crowd-sourcing
@@ -187,13 +187,13 @@ Notice how some features are raw data (`transaction_amount`) while others requir
 graph TB
     subgraph Training["Training Pipeline"]
         direction LR
-        TD["Raw\nData"] --> TF["Feature\nComputation A"] --> TM["Model\nTraining"]
+        TD["Raw<br/>Data"] --> TF["Feature<br/>Computation A"] --> TM["Model<br/>Training"]
     end
     subgraph Serving["Serving Pipeline"]
         direction LR
-        LD["Live\nData"] --> SF["Feature\nComputation B"] --> SI["Model\nInference"]
+        LD["Live<br/>Data"] --> SF["Feature<br/>Computation B"] --> SI["Model<br/>Inference"]
     end
-    TF -.- SKEW["SKEW: These must\ncompute identically!"]
+    TF -.- SKEW["SKEW: These must<br/>compute identically!"]
     SF -.- SKEW
 ```
 
@@ -203,12 +203,12 @@ A **feature store** solves the training-serving skew problem by providing a cent
 
 ```mermaid
 graph TB
-    RD["Raw Data"] --> FP["Feature\nPipelines"]
+    RD["Raw Data"] --> FP["Feature<br/>Pipelines"]
     FP --> FS["Feature Store"]
-    FS --> ON["Online Store\nLow-latency serving"]
-    FS --> OF["Offline Store\nBatch training"]
-    ON --> SP["Serving\nPipeline"]
-    OF --> TP["Training\nPipeline"]
+    FS --> ON["Online Store<br/>Low-latency serving"]
+    FS --> OF["Offline Store<br/>Batch training"]
+    ON --> SP["Serving<br/>Pipeline"]
+    OF --> TP["Training<br/>Pipeline"]
 ```
 
 As ML teams grow, a recurring problem emerges: different teams compute the same features differently. The fraud team calculates "average transaction amount" one way, the recommendations team calculates it another way. Neither knows the other exists. When the same feature is used for training and serving, slight differences in computation lead to **training-serving skew** — the model sees different data in production than it saw during training, and performance silently degrades.
@@ -264,13 +264,13 @@ Modern ML models can have billions of parameters (GPT-4 reportedly has over 1 tr
 
 ```mermaid
 graph TD
-    Q1{"Large Language\nModel?"}
-    Q1 -->|Yes| TPU1["TPU — optimized for\nGoogle's frameworks"]
-    Q1 -->|No| Q2{"Need multi-framework\nflexibility?"}
-    Q2 -->|Yes| GPU1["GPU — CUDA ecosystem\nuniversal support"]
-    Q2 -->|No| Q3{"Google Cloud\necosystem?"}
-    Q3 -->|Yes| TPU2["TPU — native\nintegration"]
-    Q3 -->|No| GPU2["GPU — multi-cloud\ncompatible"]
+    Q1{"Large Language<br/>Model?"}
+    Q1 -->|Yes| TPU1["TPU — optimized for<br/>Google's frameworks"]
+    Q1 -->|No| Q2{"Need multi-framework<br/>flexibility?"}
+    Q2 -->|Yes| GPU1["GPU — CUDA ecosystem<br/>universal support"]
+    Q2 -->|No| Q3{"Google Cloud<br/>ecosystem?"}
+    Q3 -->|Yes| TPU2["TPU — native<br/>integration"]
+    Q3 -->|No| GPU2["GPU — multi-cloud<br/>compatible"]
 ```
 
 These are the specialized chips that make ML training feasible:
@@ -343,7 +343,7 @@ A trained model sitting in storage is just a file. To create value, it needs to 
 ```mermaid
 graph LR
     TR["Train"] --> VA["Validate"] --> DP["Deploy"] --> MO["Monitor"]
-    MO --> DD{"Detect\nDrift?"}
+    MO --> DD{"Detect<br/>Drift?"}
     DD -->|Data Drift| RT["Retrain"]
     DD -->|Concept Drift| RT
     DD -->|Feature Drift| RT

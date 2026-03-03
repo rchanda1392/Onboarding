@@ -22,7 +22,7 @@ This module covers what AI-first product development looks like in practice, the
 
 ```mermaid
 graph LR
-    T["Traditional\nProduct"] --> AF["+AI Feature\nBolt-on"] --> AE["AI-Enhanced\nAI improves core"] --> AI["AI-First\nDesigned around AI"] --> AN["AI-Native\nImpossible without AI"]
+    T["Traditional<br/>Product"] --> AF["+AI Feature<br/>Bolt-on"] --> AE["AI-Enhanced<br/>AI improves core"] --> AI["AI-First<br/>Designed around AI"] --> AN["AI-Native<br/>Impossible without AI"]
 ```
 
 ### The shift in product thinking:
@@ -62,7 +62,7 @@ LLMs are enabling entirely new interaction paradigms. Understanding these patter
 
 ```mermaid
 mindmap
-  root((LLM Interface\nPatterns))
+  root((LLM Interface<br/>Patterns))
     Natural Language Query
       NL2SQL, NL2API
       Ask questions in plain English
@@ -153,19 +153,19 @@ Shipping AI features requires a different evaluation framework than traditional 
 
 ```mermaid
 graph TB
-    ACC["Accuracy\nIs the output correct?"]
-    TR["Trust\nDo users believe it?"]
-    UX["UX\nIs it usable and valuable?"]
+    ACC["Accuracy<br/>Is the output correct?"]
+    TR["Trust<br/>Do users believe it?"]
+    UX["UX<br/>Is it usable and valuable?"]
     ACC --- TR
     TR --- UX
     UX --- ACC
-    CENTER["Successful\nAI Product"]
+    CENTER["Successful<br/>AI Product"]
     ACC --> CENTER
     TR --> CENTER
     UX --> CENTER
-    ACC -.- F1["Without accuracy:\nCool Demo Trap"]
-    TR -.- F2["Without trust:\nTrust Erosion"]
-    UX -.- F3["Without UX:\nAccuracy Theater"]
+    ACC -.- F1["Without accuracy:<br/>Cool Demo Trap"]
+    TR -.- F2["Without trust:<br/>Trust Erosion"]
+    UX -.- F3["Without UX:<br/>Accuracy Theater"]
 ```
 
 **Accuracy** — Is the AI output correct?
@@ -216,10 +216,10 @@ All three must align. A great model with a bad UX fails. A great UX with an inac
 
 ```mermaid
 graph BT
-    L1["Level 1: Rules-based\nStatic thresholds and if/then logic"]
-    L2["Level 2: ML-enhanced\nTrained models for anomaly detection, clustering"]
-    L3["Level 3: LLM-augmented\nNatural language interfaces, generative AI"]
-    L4["Level 4: AI-native\nProduct impossible without AI — e.g. Cursor"]
+    L1["Level 1: Rules-based<br/>Static thresholds and if/then logic"]
+    L2["Level 2: ML-enhanced<br/>Trained models for anomaly detection, clustering"]
+    L3["Level 3: LLM-augmented<br/>Natural language interfaces, generative AI"]
+    L4["Level 4: AI-native<br/>Product impossible without AI — e.g. Cursor"]
     L1 --> L2 --> L3 --> L4
 ```
 
