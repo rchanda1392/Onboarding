@@ -20,6 +20,21 @@ Understanding this history gives you two things: (1) context for the internal to
 
 Google's engineering culture has a tradition of publishing landmark research papers that often become the basis for open-source projects used worldwide. As a PM, you don't need to understand every implementation detail, but you should know what each system does and why it matters.
 
+```mermaid
+timeline
+    title Google's Foundational Papers and Their Open-Source Impact
+    2003 : GFS
+         : → HDFS
+    2004 : MapReduce
+         : → Hadoop
+    2006 : Bigtable
+         : → HBase, Cassandra
+    2010 : Dremel
+         : → Apache Drill, Presto
+    2012 : Spanner
+         : → CockroachDB
+```
+
 ### MapReduce (2004)
 The paper that started it all. MapReduce introduced a simple programming model for processing massive datasets across thousands of machines. You define a `map` function (process each piece of data) and a `reduce` function (aggregate the results). The framework handles parallelization, fault tolerance, and data distribution automatically. MapReduce inspired Apache Hadoop, which powered the first generation of big data systems at companies like Yahoo, Facebook, and LinkedIn.
 
@@ -53,6 +68,18 @@ The internal query engine that became the foundation for **BigQuery**. Dremel in
 **BigQuery** is Google Cloud's serverless data warehouse — and it's the public incarnation of the Dremel engine described above. Understanding BigQuery is valuable because (a) it's Google's flagship data product, and (b) its architecture reflects Google's approach to data infrastructure more broadly.
 
 ### Key architectural principles:
+
+```mermaid
+graph TB
+    UQ["User Query — just write SQL"]
+    DR["Dremel\nDistributed execution engine"]
+    CO["Colossus\nDistributed file system"]
+    JU["Jupiter\nPetabit network fabric"]
+    UQ --> DR --> CO --> JU
+    SL["Serverless — no clusters to provision"]
+    DR -.- SL
+```
+
 - **Serverless**: No infrastructure to manage. You just write SQL and Google handles compute allocation.
 - **Separation of storage and compute**: Data is stored in Google's Colossus file system. Query processing runs on Dremel's distributed execution engine. The two scale independently.
 - **Columnar storage**: Data is stored in a columnar format optimized for analytical queries — scanning only the columns you need, not entire rows.
@@ -80,6 +107,21 @@ BigQuery provides built-in observability through:
 ## Section 3: Google's Engineering Culture and How SWEs/Data Engineers Work
 
 Understanding how Google engineers work helps you understand the context for the observability platform you're building. Google's engineering culture has distinctive characteristics that affect product decisions.
+
+```mermaid
+mindmap
+  root((Google Engineering\nCulture))
+    Code Review
+      Every change reviewed via Critique
+    Monorepo
+      One codebase, 2B+ lines
+    SRE Philosophy
+      Error budgets, SLOs, blameless postmortems
+    Design Docs
+      Think before code, peer reviewed
+    Bottom-up Innovation
+      Engineers identify and solve problems
+```
 
 ### Key cultural elements:
 
@@ -110,6 +152,19 @@ Understanding how Google engineers work helps you understand the context for the
 Your team manages pipelines for two of Google's most important data domains: Google Maps and Google Gemini. Here's what's publicly known about each.
 
 ### Google Maps Data
+
+```mermaid
+graph LR
+    S1["Satellite\nImagery"] --> ING[Ingestion]
+    S2["Street View\nCars"] --> ING
+    S3["User\nReports"] --> ING
+    S4["Traffic\nSensors"] --> ING
+    S5["Business\nListings"] --> ING
+    ING --> PROC["Processing\n& Fusion"]
+    PROC --> VER["Verification\nAutomated + Human"]
+    VER --> SERV["Serving\nGoogle Maps App"]
+```
+
 Google Maps is one of the most data-intensive products in the world. It processes data from:
 - **Satellite and aerial imagery** — Regularly updated imagery for the entire planet
 - **Street View** — 360-degree street-level imagery from camera-equipped vehicles

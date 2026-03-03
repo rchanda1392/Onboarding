@@ -331,6 +331,59 @@ Starlight gave us search, dark mode, and responsive design for free. But when th
 
 ---
 
+## Visual Diagrams: Making Complex Concepts Click
+
+We added **31 Mermaid.js diagrams** across all 7 study modules. These aren't just decoration — each one captures a core concept that's much easier to understand visually than in text.
+
+### What We Added
+
+| Module | Diagrams | Highlights |
+|--------|----------|------------|
+| Module 1: Pipelines | 5 | ETL vs ELT flow, 5 Pillars mindmap, SLA/SLO/SLI pyramid |
+| Module 2: Industry | 4 | Snowflake architecture, Databricks Lakehouse, tool ecosystem map |
+| Module 3: Google | 4 | Foundational papers timeline, BigQuery architecture, Maps pipeline |
+| Module 4: ML/AI | 6 | ML researcher journey (80/20 split), training-serving skew, model lifecycle |
+| Module 5: Strategy | 4 | AI-first spectrum, Accuracy-Trust-UX triangle, maturity ladder |
+| Module 6: AI+Obs | 4 | Text-to-SQL pipeline, anomaly detection, copilot sequence diagram |
+| Module 7: DevEx | 4 | 3 dimensions of DevEx, shift-left in CI/CD, adoption funnel |
+
+### How It Works
+
+The diagrams use **Mermaid.js** — a text-based diagramming language. Instead of image files, diagrams are written as code blocks directly in the MDX files:
+
+````markdown
+```mermaid
+graph LR
+    A[Source] --> B[Transform] --> C[Load]
+```
+````
+
+At build time, `rehype-mermaid` converts these code blocks into inline SVGs. Zero client-side JavaScript — the diagrams are just static SVGs baked into the HTML.
+
+### Why This Approach?
+
+- **No image files to manage** — diagrams live in the same MDX file as the content
+- **Version controlled** — every diagram change is tracked in git
+- **Easy to update** — just edit the Mermaid text, push, and the diagram updates
+- **Fast to render** — SVGs are tiny compared to PNGs
+
+### How to Edit or Add Diagrams
+
+To modify an existing diagram, find the ` ```mermaid ` block in the module's MDX file and edit the text. To add a new one, insert a fenced code block with the `mermaid` language tag wherever you want the diagram to appear. The [Mermaid docs](https://mermaid.js.org/intro/) have a live editor where you can preview diagrams before adding them.
+
+Supported diagram types we used: flowcharts (`graph LR/TB/TD`), mindmaps (`mindmap`), timelines (`timeline`), and sequence diagrams (`sequenceDiagram`).
+
+### The Engineering Lesson
+
+This is a great example of **choosing the right tool for the job**. We could have used Figma, Excalidraw, or hand-drawn PNGs. But Mermaid's text-based approach means diagrams are:
+1. **Searchable** (Pagefind indexes the SVG text)
+2. **Diffable** (git shows what changed in a diagram)
+3. **Maintainable** (anyone can edit text, not everyone can use a design tool)
+
+The tradeoff: Mermaid diagrams aren't as pretty as hand-designed graphics. But for a study plan, clarity beats beauty every time.
+
+---
+
 ## What a Good Engineer Would Do Next
 
 If this were a production project at Google, the next steps would be:

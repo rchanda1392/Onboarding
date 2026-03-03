@@ -1,12 +1,16 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import preact from '@astrojs/preact';
+import rehypeMermaid from 'rehype-mermaid';
 
 const base = process.env.ASTRO_BASE || '/Onboarding';
 
 export default defineConfig({
   site: process.env.ASTRO_SITE || 'https://rchanda1392.github.io',
   base,
+  markdown: {
+    rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg' }]],
+  },
   integrations: [
     preact(),
     starlight({

@@ -459,10 +459,130 @@ This means we keep the existing Azure OpenAI `streamChat` logic for the SWA depl
 
 **Impact**: Only `chat-loader.js` changes. No build config, no new dependencies, no workflow changes.
 
+### 2026-03-02: Add Visual Diagrams to Study Modules (Mermaid.js)
+**Context**: Modules are text-heavy with zero visual aids. Complex topics (pipeline architectures, ML workflows, system comparisons) would be much easier to grasp with flowcharts and diagrams.
+**Mode**: Fresh Feature
+
+**Decision**: Use Mermaid.js diagrams rendered at build time via `rehype-mermaid`. Diagrams live as fenced code blocks directly in MDX — no image files, no asset pipeline. Style is technical-but-clean for architecture topics, conceptual/educational for strategy topics.
+
+**Approach**:
+- Install `rehype-mermaid` (build-time SVG rendering via Playwright Chromium)
+- Configure as rehype plugin in `astro.config.mjs`
+- Add ~35 diagrams across all 7 modules (as many as genuinely aid understanding)
+- Diagrams are version-controlled text in MDX — easy to edit and maintain
+
+#### What Changes
+
+| Area | Before | After |
+|------|--------|-------|
+| **Dependencies** | None for diagrams | `rehype-mermaid` added |
+| **astro.config.mjs** | No rehype plugins | `rehype-mermaid` added to markdown config |
+| **Module MDX files** | Text only | Text + Mermaid fenced code blocks |
+| **Build time** | ~seconds | Slightly longer (Mermaid SVG rendering) |
+
+#### What Stays the Same
+- All existing content, styling, chat feature, deployment workflows
+- No new image files or asset directories needed
+- No client-side JavaScript added (SVGs rendered at build time)
+
+#### Files Modified
+1. **`package.json`** — Add `rehype-mermaid` dependency
+2. **`astro.config.mjs`** — Add rehype plugin config
+3. **All 7 module MDX files** — Add Mermaid diagram code blocks
+
+#### Diagram Inventory (~35 diagrams)
+
+**Module 1: Data Pipelines & Observability Foundations (~5 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 1.1 | ETL vs ELT Pipeline Flow | Flowchart LR | Side-by-side flow makes the core ETL/ELT distinction instantly clear |
+| 1.2 | Batch vs Streaming Comparison | Flowchart LR | Scheduled chunks vs continuous event flow with timing |
+| 1.3 | 5 Pillars of Data Observability | Mindmap | Central framework of the module — visual anchor for memorization |
+| 1.4 | SLA/SLO/SLI Hierarchy | Flowchart TB | Pyramid showing Business Promise → Target → Metric |
+| 1.5 | Data vs Software Observability | Flowchart | Side-by-side: Metrics/Logs/Traces vs Freshness/Volume/Distribution/Schema/Lineage |
+
+**Module 2: Industry Landscape (~4 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 2.1 | Snowflake Architecture | Flowchart TB | Three-layer: Cloud Services → Compute → Storage |
+| 2.2 | Databricks Lakehouse Architecture | Flowchart TB | Data Lake → Delta Lake → Unity Catalog → Analytics/ML |
+| 2.3 | Observability Tools Ecosystem | Mindmap | Tool categories: Quality, Platforms, Orchestration, Standards |
+| 2.4 | Lessons for Google | Mindmap | Synthesis: Governance-first, Multi-signal, Dev-friendly, Unified, AI-powered |
+
+**Module 3: Google's Data Ecosystem (~4 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 3.1 | Foundational Papers Timeline | Timeline | GFS→MapReduce→Bigtable→Dremel→Spanner + open-source counterparts |
+| 3.2 | BigQuery Architecture | Flowchart TB | Dremel + Colossus + Jupiter — the serverless stack |
+| 3.3 | Engineering Culture Pillars | Mindmap | Code Review, Monorepo, SRE, Design Docs, Bottom-up Innovation |
+| 3.4 | Maps Data Ingestion Pipeline | Flowchart LR | Multiple sources → Ingestion → Processing → Verification → Serving |
+
+**Module 4: ML/AI Infrastructure (~6 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 4.1 | ML Researcher's Journey | Flowchart LR | Problem→Data→Features→Experiment→Evaluate→Productionize (80% is data work) |
+| 4.2 | Data Collection & Labeling | Mindmap | Approaches: Human, Crowd-source, Semi-supervised, Active Learning, Synthetic |
+| 4.3 | Training-Serving Skew | Flowchart TB | Training vs Serving pipelines — highlight the gap where skew occurs |
+| 4.4 | Feature Store Architecture | Flowchart TB | Raw Data → Pipelines → Store (online+offline) → Training/Serving |
+| 4.5 | GPU vs TPU Decision | Flowchart TB | Decision tree: model type, flexibility, ecosystem, cloud needs |
+| 4.6 | Model Lifecycle | Flowchart LR | Train → Deploy → Monitor → Detect Drift → Retrain (cycle) |
+
+**Module 5: AI-First Product Strategy (~4 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 5.1 | AI-First Spectrum | Flowchart LR | Traditional → +AI Feature → AI-Enhanced → AI-First → AI-Native |
+| 5.2 | LLM Interface Patterns | Mindmap | NL2X, Conversational, Proactive, Contextual, Summarization |
+| 5.3 | Accuracy-Trust-UX Triangle | Flowchart | Three vertices + failure modes when missing any one |
+| 5.4 | AI Product Maturity Ladder | Flowchart TB | Rules → ML → LLM → AI-Native with examples |
+
+**Module 6: AI + Data Observability (~4 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 6.1 | Text-to-SQL Pipeline | Flowchart LR | Question → LLM → SQL → DB → Results → NL Answer |
+| 6.2 | ML Anomaly Detection Pipeline | Flowchart LR | Metrics → Features → ML Model → Score → Alert (+ feedback loop) |
+| 6.3 | AI Copilot Interaction | Sequence | Dev → Copilot → Logs/Metrics → Copilot → Dev (root cause) |
+| 6.4 | Auto-Documentation Flow | Flowchart LR | Source Tables → AI Analysis → Descriptions + Lineage → Catalog |
+
+**Module 7: Developer Experience (~4 diagrams)**
+
+| # | Diagram | Type | Purpose |
+|---|---------|------|---------|
+| 7.1 | Three Dimensions of DevEx | Mindmap | Feedback Loops, Cognitive Load, Flow State — with example metrics |
+| 7.2 | IDE Integration Architecture | Flowchart TB | IDE → Extension → API → Observability Platform |
+| 7.3 | Shift-Left Observability | Flowchart LR | Code → Pre-commit → PR Gates → Deploy → Monitor (arrow pointing left) |
+| 7.4 | Developer Adoption Funnel | Flowchart TB | Awareness → Trial → Integration → Habit → Advocacy |
+
+#### Success Criteria
+- [ ] `rehype-mermaid` installed and rendering in dev mode
+- [ ] All ~35 diagrams render correctly in dev and production builds
+- [ ] Diagrams readable on light backgrounds
+- [ ] Each diagram has contextual caption in surrounding MDX
+- [ ] Site builds and deploys to GitHub Pages without errors
+
+#### Implementation Phases
+
+| Phase | Scope | Diagrams |
+|-------|-------|----------|
+| 1 | Infrastructure setup (install, config, verify) | 1 test diagram |
+| 2 | Modules 1-3 (Foundations) | ~13 diagrams |
+| 3 | Module 4 (ML/AI Infrastructure) | ~6 diagrams |
+| 4 | Modules 5-7 (Strategy & DevEx) | ~12 diagrams |
+| 5 | Polish & production verification | All diagrams |
+
+**Rationale**: Mermaid.js is the simplest, most maintainable approach — diagrams as text in MDX, rendered to SVG at build time. No image pipeline, no client JS, version-controlled, easy to update.
+
+**Impact**: One new npm dependency (`rehype-mermaid`), small config change, and content additions to each module MDX. No architectural changes.
+
 ## Open Questions
 - ~~Should we add a "Glossary" page?~~ **Yes — included**
 - ~~Should modules have reflection questions?~~ **Yes — "Reflect & Apply" section added to each module**
 - No remaining open questions
 
 ## Status
-**Project is complete and deployed.** All modules written, chat feature live, site deployed to GitHub Pages.
+**Project is complete and deployed.** All modules written, chat feature live, site deployed to GitHub Pages. Visual diagrams feature in progress.

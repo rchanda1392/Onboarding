@@ -22,6 +22,22 @@ We'll cover the full journey: from collecting and labeling raw data, to engineer
 
 Before diving into infrastructure, let's walk through what it actually looks like to go from "business problem" to "production model." This context will make every other section click.
 
+```mermaid
+graph LR
+    PF["Problem\nFraming"] --> DE["Data\nExploration"] --> FE["Feature\nEngineering"]
+    FE --> EX["Experimentation"] --> EV["Evaluation"] --> PR["Productionization"]
+    subgraph eighty["~80% of time spent here"]
+        PF
+        DE
+        FE
+    end
+    subgraph twenty["~20% — where value is delivered"]
+        EX
+        EV
+        PR
+    end
+```
+
 ### Step 1: Problem Framing
 
 An ML researcher doesn't start with "let's build a model." They start with a business problem and ask: **can ML solve this better than a rule-based approach?** This is called problem framing — translating a vague request like "make our recommendations better" into a concrete ML formulation like "predict the probability that user X will click on item Y given their past 30 days of activity."
@@ -91,6 +107,21 @@ Every ML model starts with data — and the quality of that data is the single b
 
 Google has a unique advantage here: products like Maps, Search, YouTube, and Gmail generate massive labeled datasets as a natural byproduct of user interaction. Every time someone corrects a Maps pin location, rates a YouTube video, or marks an email as spam, they're creating training data.
 
+```mermaid
+mindmap
+  root((Training Data\nSources))
+    Human Annotation
+      High quality, expensive
+    Crowd-sourcing
+      Scale, variable quality
+    Semi-supervised
+      Leverage unlabeled data
+    Active Learning
+      Smart sampling, cost-efficient
+    Synthetic Data
+      Generated, unlimited scale
+```
+
 ### Data Labeling Workflows
 
 **Supervised learning** — the most common type of ML — requires labeled data. Someone (or something) has to look at each example and tag it with the correct answer. This is labeling, and it's one of the most expensive and time-consuming parts of ML.
@@ -150,7 +181,35 @@ Notice how some features are raw data (`transaction_amount`) while others requir
 | **Bucketing** | Group continuous values into categories | Age groups: 18-24, 25-34, 35-44 |
 | **Encoding** | Convert categories to numbers | Country → one-hot vector or ordinal encoding |
 
+### The Training-Serving Skew Problem
+
+```mermaid
+graph TB
+    subgraph Training["Training Pipeline"]
+        direction LR
+        TD["Raw\nData"] --> TF["Feature\nComputation A"] --> TM["Model\nTraining"]
+    end
+    subgraph Serving["Serving Pipeline"]
+        direction LR
+        LD["Live\nData"] --> SF["Feature\nComputation B"] --> SI["Model\nInference"]
+    end
+    TF -.- SKEW["SKEW: These must\ncompute identically!"]
+    SF -.- SKEW
+```
+
 ### The Feature Store Concept
+
+A **feature store** solves the training-serving skew problem by providing a centralized repository for feature definitions and computed values.
+
+```mermaid
+graph TB
+    RD["Raw Data"] --> FP["Feature\nPipelines"]
+    FP --> FS["Feature Store"]
+    FS --> ON["Online Store\nLow-latency serving"]
+    FS --> OF["Offline Store\nBatch training"]
+    ON --> SP["Serving\nPipeline"]
+    OF --> TP["Training\nPipeline"]
+```
 
 As ML teams grow, a recurring problem emerges: different teams compute the same features differently. The fraud team calculates "average transaction amount" one way, the recommendations team calculates it another way. Neither knows the other exists. When the same feature is used for training and serving, slight differences in computation lead to **training-serving skew** — the model sees different data in production than it saw during training, and performance silently degrades.
 
@@ -202,6 +261,17 @@ Modern ML models can have billions of parameters (GPT-4 reportedly has over 1 tr
 - **Model parallelism**: The model itself is split across machines, with each machine holding a portion of the parameters. Necessary for models too large to fit in a single machine's memory (like large language models).
 
 ### GPU vs TPU
+
+```mermaid
+graph TD
+    Q1{"Large Language\nModel?"}
+    Q1 -->|Yes| TPU1["TPU — optimized for\nGoogle's frameworks"]
+    Q1 -->|No| Q2{"Need multi-framework\nflexibility?"}
+    Q2 -->|Yes| GPU1["GPU — CUDA ecosystem\nuniversal support"]
+    Q2 -->|No| Q3{"Google Cloud\necosystem?"}
+    Q3 -->|Yes| TPU2["TPU — native\nintegration"]
+    Q3 -->|No| GPU2["GPU — multi-cloud\ncompatible"]
+```
 
 These are the specialized chips that make ML training feasible:
 
@@ -269,6 +339,17 @@ Without all of these, reproducing a result — even your own from last week — 
 ## Section 5: Model Serving & Monitoring
 
 A trained model sitting in storage is just a file. To create value, it needs to serve predictions to users, applications, and other systems — reliably, at scale, and with low latency.
+
+```mermaid
+graph LR
+    TR["Train"] --> VA["Validate"] --> DP["Deploy"] --> MO["Monitor"]
+    MO --> DD{"Detect\nDrift?"}
+    DD -->|Data Drift| RT["Retrain"]
+    DD -->|Concept Drift| RT
+    DD -->|Feature Drift| RT
+    DD -->|No| MO
+    RT --> TR
+```
 
 ### Deployment Patterns
 

@@ -20,6 +20,11 @@ This module covers what AI-first product development looks like in practice, the
 
 **AI-first** means designing your product around AI capabilities from the start — not adding AI to an existing product as an afterthought. The difference is like mobile-first vs. responsive web design: both involve mobile, but the starting assumptions are fundamentally different.
 
+```mermaid
+graph LR
+    T["Traditional\nProduct"] --> AF["+AI Feature\nBolt-on"] --> AE["AI-Enhanced\nAI improves core"] --> AI["AI-First\nDesigned around AI"] --> AN["AI-Native\nImpossible without AI"]
+```
+
 ### The shift in product thinking:
 
 | Traditional Product | AI-First Product |
@@ -54,6 +59,26 @@ This module covers what AI-first product development looks like in practice, the
 ## Section 2: LLM-Powered Interfaces and UX Patterns
 
 LLMs are enabling entirely new interaction paradigms. Understanding these patterns helps you design the right AI experiences for your observability platform.
+
+```mermaid
+mindmap
+  root((LLM Interface\nPatterns))
+    Natural Language Query
+      NL2SQL, NL2API
+      Ask questions in plain English
+    Conversational Investigation
+      Multi-turn drill-down
+      What failed? Why? What next?
+    Proactive Insights
+      AI surfaces problems automatically
+      No user action required
+    Contextual Assistance
+      Inline suggestions and smart defaults
+      Like Copilot for observability
+    AI-Generated Summaries
+      Human-readable system state
+      Replace raw dashboards
+```
 
 ### Emerging UX patterns:
 
@@ -126,6 +151,23 @@ Shipping AI features requires a different evaluation framework than traditional 
 
 ### The evaluation triangle:
 
+```mermaid
+graph TB
+    ACC["Accuracy\nIs the output correct?"]
+    TR["Trust\nDo users believe it?"]
+    UX["UX\nIs it usable and valuable?"]
+    ACC --- TR
+    TR --- UX
+    UX --- ACC
+    CENTER["Successful\nAI Product"]
+    ACC --> CENTER
+    TR --> CENTER
+    UX --> CENTER
+    ACC -.- F1["Without accuracy:\nCool Demo Trap"]
+    TR -.- F2["Without trust:\nTrust Erosion"]
+    UX -.- F3["Without UX:\nAccuracy Theater"]
+```
+
 **Accuracy** — Is the AI output correct?
 - Measure precision and recall for different types of outputs
 - Track accuracy across different user segments and use cases
@@ -171,6 +213,16 @@ Adapted from product-market fit:
 All three must align. A great model with a bad UX fails. A great UX with an inaccurate model fails. A great model and UX solving the wrong problem fails.
 
 ### Framework 2: The AI Product Maturity Ladder
+
+```mermaid
+graph BT
+    L1["Level 1: Rules-based\nStatic thresholds and if/then logic"]
+    L2["Level 2: ML-enhanced\nTrained models for anomaly detection, clustering"]
+    L3["Level 3: LLM-augmented\nNatural language interfaces, generative AI"]
+    L4["Level 4: AI-native\nProduct impossible without AI — e.g. Cursor"]
+    L1 --> L2 --> L3 --> L4
+```
+
 1. **Rules-based**: Static thresholds and rules (not really AI, but often the right starting point)
 2. **ML-enhanced**: Traditional ML models improve specific features (anomaly detection, clustering)
 3. **LLM-augmented**: Large language models add natural language interfaces and generative capabilities

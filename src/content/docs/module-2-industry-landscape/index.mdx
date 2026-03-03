@@ -21,6 +21,18 @@ This module gives you the competitive landscape — what's out there, what works
 **Snowflake** is a cloud-native data warehouse built around a unique architecture that separates compute from storage. This separation is fundamental — it means you can scale query processing independently from data storage, and multiple compute clusters ("virtual warehouses") can access the same data simultaneously.
 
 ### Key architectural components:
+
+```mermaid
+graph TB
+    CS["Cloud Services Layer\nQuery optimization, security, metadata"]
+    QP["Compute Layer\nVirtual Warehouse 1 · Virtual Warehouse 2 · Virtual Warehouse N"]
+    ST["Storage Layer\nMicro-partitions, columnar, compressed"]
+    CS --> QP --> ST
+    Note["Compute and Storage\nscale independently"]
+    QP -.- Note
+    ST -.- Note
+```
+
 - **Cloud Services Layer**: Handles authentication, metadata management, query optimization, and access control
 - **Query Processing Layer**: Virtual warehouses that execute SQL queries — each is an independent compute cluster
 - **Storage Layer**: Centralized, compressed, columnar storage managed entirely by Snowflake
@@ -49,6 +61,18 @@ This module gives you the competitive landscape — what's out there, what works
 **Databricks** pioneered the **Lakehouse** architecture — a hybrid that combines the best of data lakes (cheap storage for raw data, support for all file types) with data warehouse features (ACID transactions, schema enforcement, fast SQL queries).
 
 ### Key architectural components:
+
+```mermaid
+graph TB
+    RD["Raw Data\nData Lake — any format, any scale"]
+    DL["Delta Lake\nACID transactions, versioning, schema enforcement"]
+    UC["Unity Catalog\nGovernance, lineage, access control"]
+    WL["Analytics & ML Workloads\nDatabricks SQL · MLflow · Notebooks"]
+    RD --> DL --> UC --> WL
+    Note["Lakehouse = Data Lake flexibility\n+ Warehouse reliability"]
+    DL -.- Note
+```
+
 - **Delta Lake**: Open-source storage layer that brings reliability to data lakes with ACID transactions, time travel, and schema enforcement
 - **Unity Catalog**: Centralized governance layer for all data and AI assets — provides fine-grained access control, lineage tracking, and data discovery across the entire Lakehouse
 - **Databricks SQL**: Serverless SQL analytics engine optimized for BI workloads
@@ -76,6 +100,25 @@ This module gives you the competitive landscape — what's out there, what works
 ## Section 3: Observability Tools Ecosystem
 
 Beyond the platform-native tools from Snowflake and Databricks, a rich ecosystem of specialized observability and data quality tools has emerged:
+
+```mermaid
+mindmap
+  root((Observability\nTools Ecosystem))
+    Data Quality Testing
+      Great Expectations
+      Soda
+      dbt tests
+    Observability Platforms
+      Monte Carlo
+      Bigeye
+      Datafold
+    Pipeline Orchestration
+      Airflow
+      Dagster
+      Prefect
+    Standards
+      OpenTelemetry for data
+```
 
 ### Monte Carlo — Data Observability Platform
 The company that coined "data observability." Monte Carlo provides automated monitoring across the 5 pillars (freshness, volume, distribution, schema, lineage). It integrates with data warehouses, lakes, ETL tools, and BI platforms. Think of it as "Datadog for data."
@@ -108,6 +151,21 @@ The [OpenTelemetry](https://opentelemetry.io/) standard — originally designed 
 ## Section 4: Patterns and Lessons for Google's Internal Platform
 
 What can you take from the external landscape and apply to your internal observability platform? Several patterns emerge:
+
+```mermaid
+mindmap
+  root((Lessons\nfor Google))
+    Governance-first design
+      Build observability into the platform from day one
+    Multi-signal observability
+      Combine freshness, volume, distribution, schema, lineage
+    Developer-friendly checks
+      Quality as code, not a separate compliance step
+    Unified observability
+      Bridge data and software observability
+    AI-powered anomaly detection
+      ML baselines replace static thresholds
+```
 
 ### Pattern 1: Governance-First Design (from Databricks Unity Catalog)
 Don't bolt observability on after the fact. Build it into the platform from the start. Unity Catalog's success comes from making lineage, access control, and quality monitoring inherent properties of the system — not separate tools you have to integrate.

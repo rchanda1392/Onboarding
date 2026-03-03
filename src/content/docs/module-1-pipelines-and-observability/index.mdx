@@ -25,10 +25,34 @@ There are two dominant paradigms:
 - **ETL (Extract, Transform, Load)**: Data is extracted from sources, transformed in a staging area, then loaded into the destination. Traditional approach used when compute was expensive and storage was limited.
 - **ELT (Extract, Load, Transform)**: Data is extracted and loaded raw into a destination (like a data lake or warehouse), then transformed in place. Modern approach enabled by cheap cloud storage and powerful query engines like BigQuery.
 
+```mermaid
+graph LR
+    subgraph ETL["ETL (Traditional)"]
+        direction LR
+        A1[Sources] --> B1[Extract] --> C1[Transform\nin staging] --> D1[Load] --> E1[Data\nWarehouse]
+    end
+    subgraph ELT["ELT (Modern)"]
+        direction LR
+        A2[Sources] --> B2[Extract] --> D2[Load raw] --> E2[Data\nWarehouse] --> C2[Transform\nin place]
+    end
+```
+
 Pipelines also differ by timing:
 
 - **Batch processing**: Data is collected over a period and processed together at scheduled intervals (hourly, daily). Good for large-volume analytics where latency tolerance is high.
 - **Streaming (real-time)**: Data is processed continuously as it arrives. Essential when freshness matters — fraud detection, live dashboards, real-time recommendations.
+
+```mermaid
+graph LR
+    subgraph Batch["Batch Processing"]
+        direction LR
+        BA[Data\naccumulates] --> BB[Scheduled\ntrigger] --> BC[Process\nbatch] --> BD[Output]
+    end
+    subgraph Stream["Streaming (Real-time)"]
+        direction LR
+        SA[Events\narrive] --> SB[Process\nimmediately] --> SC[Output\ncontinuously]
+    end
+```
 
 > **Key Insight**: "The shift from ETL to ELT reflects a broader trend: storage became cheap, compute became elastic, and transformation logic moved closer to the analysts who understand the business context."
 > — [Fundamentals of Data Engineering, O'Reilly](https://www.oreilly.com/library/view/fundamentals-of-data/9781098108298/)
@@ -45,6 +69,21 @@ Pipelines also differ by timing:
 ## Section 2: The 5 Pillars of Data Observability
 
 **Data observability** is the ability to fully understand the health and state of data in your system. The concept was popularized by Barr Moses (CEO of Monte Carlo) who defined five key pillars:
+
+```mermaid
+mindmap
+  root((Data\nObservability))
+    Freshness
+      Is the data up to date?
+    Volume
+      Is the right amount arriving?
+    Distribution
+      Are values in expected range?
+    Schema
+      Has the structure changed?
+    Lineage
+      Where did it come from and go?
+```
 
 1. **Freshness**: Is the data up to date? When was it last updated? Stale data can lead to bad decisions — imagine a dashboard showing yesterday's data when leadership expects real-time.
 
@@ -87,6 +126,14 @@ To manage data quality at scale, teams borrow from site reliability engineering 
 - **SLO (Service Level Objective)**: An internal target that's typically stricter than the SLA. "Dashboard data will be no more than 30 minutes stale, 99.9% of the time."
 - **SLI (Service Level Indicator)**: The actual measurement. "Right now, dashboard data is 23 minutes stale."
 
+```mermaid
+graph TB
+    SLA["SLA — Business Promise\n99.9% data freshness guaranteed"]
+    SLO["SLO — Internal Target\nData updated within 15 min, 99.95%"]
+    SLI["SLI — Measured Metric\nActual update latency = 12 min"]
+    SLA --> SLO --> SLI
+```
+
 > **Key Insight**: "Treating data pipelines like production services — with SLAs, SLOs, and SLIs — is the shift that separates mature data organizations from those constantly firefighting data quality issues."
 > — [Fundamentals of Data Observability, O'Reilly](https://www.oreilly.com/library/view/fundamentals-of-data/9781098133283/)
 
@@ -110,6 +157,26 @@ If you're coming from a software engineering background, you already know the th
 | **Detection difficulty** | Errors are often loud (500s, exceptions) | Data issues are often silent — the pipeline "succeeds" but the data is wrong |
 | **Blast radius** | Immediate user impact (broken UI, failed requests) | Delayed impact — bad data flows downstream, corrupts dashboards and ML models |
 | **Tools** | Datadog, Grafana, New Relic, PagerDuty | Monte Carlo, Great Expectations, Soda, dbt tests |
+
+```mermaid
+graph LR
+    subgraph Software["Software Observability"]
+        direction TB
+        S1[Metrics]
+        S2[Logs]
+        S3[Traces]
+    end
+    subgraph Data["Data Observability"]
+        direction TB
+        D1[Freshness]
+        D2[Volume]
+        D3[Distribution]
+        D4[Schema]
+        D5[Lineage]
+    end
+    Software --- Common["Shared goal:\nDetect silent failures\nbefore users notice"]
+    Data --- Common
+```
 
 The key difference: **software failures are loud, data failures are silent**. A web server returning 500 errors triggers alerts immediately. A pipeline that silently drops 20% of rows may not be noticed for days — until an executive asks why the revenue numbers look off.
 

@@ -26,6 +26,18 @@ The intersection of AI and data observability is where the most transformative p
 - During incidents, speed matters — asking a natural language question is faster than constructing a query
 
 ### How it works:
+
+```mermaid
+graph LR
+    UQ["User Question\nWhich pipelines failed yesterday?"]
+    LLM["LLM\n+ schema context"]
+    SQL["Generated\nSQL Query"]
+    DB["Database\nExecution"]
+    RES["Results"]
+    NL["Natural Language\nAnswer"]
+    UQ --> LLM --> SQL --> DB --> RES --> NL
+```
+
 1. User types a natural language question
 2. An LLM translates the question into SQL (using table schemas, column descriptions, and example queries as context)
 3. The SQL is executed against the database
@@ -53,6 +65,16 @@ Google Cloud's own Gemini integration with databases follows this pattern — us
 ## Section 2: ML-Powered Anomaly Detection for Pipeline Health
 
 Static thresholds ("alert if latency > 5 minutes") don't scale. When you have thousands of pipelines with different patterns — some run hourly, some daily, some have variable volumes — manually setting thresholds for each one is impossible. This is where ML-powered anomaly detection shines.
+
+```mermaid
+graph LR
+    PM["Pipeline\nMetrics"] --> FE["Feature\nExtraction"] --> ML["ML Model\nIsolation Forest\nAutoencoder\nProphet"]
+    ML --> SC["Anomaly\nScore"]
+    SC --> DEC{"Alert or\nSuppress?"}
+    DEC -->|Alert| AL["Alert\nEngineers"]
+    DEC -->|Suppress| NR["No Action"]
+    AL --> FB["Human\nFeedback"] --> ML
+```
 
 ### How ML anomaly detection works for data pipelines:
 
@@ -90,6 +112,20 @@ Monte Carlo and other observability platforms use multi-signal anomaly detection
 
 Module 5 covered the copilot pattern in general. This section focuses specifically on how copilots are being applied to observability and data engineering workflows.
 
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Cop as AI Copilot
+    participant Sys as Logs/Metrics/Lineage
+    Dev->>Cop: Pipeline X failed at 3am
+    Cop->>Sys: Gather context
+    Sys-->>Cop: Recent changes, related alerts, history
+    Cop->>Dev: Root cause: upstream schema change dropped column Y
+    Cop->>Dev: Suggested fix: update parser for new schema
+    Dev->>Cop: Generate backfill command
+    Cop->>Dev: Run pipeline Z with params A, B, C
+```
+
 ### What an observability copilot does:
 
 **Incident investigation**: When an alert fires, the copilot automatically gathers context — recent changes, related alerts, historical patterns — and presents a structured investigation summary. Instead of an engineer manually querying 5 different systems, the copilot does it in seconds.
@@ -122,6 +158,19 @@ Module 5 covered the copilot pattern in general. This section focuses specifical
 ## Section 4: Auto-Generated Data Documentation and Lineage
 
 One of the most practical applications of AI in data observability is automated documentation and lineage discovery. Most data systems suffer from documentation that's outdated, incomplete, or non-existent. AI can fix this.
+
+```mermaid
+graph LR
+    ST["Source Tables"] --> AI["AI Analysis"]
+    QL["Query Logs"] --> AI
+    CD["Code"] --> AI
+    AI --> DESC["Column\nDescriptions"]
+    AI --> DOCS["Usage\nDocumentation"]
+    AI --> LIN["Lineage\nGraph"]
+    DESC --> CAT["Data\nCatalog"]
+    DOCS --> CAT
+    LIN --> CAT
+```
 
 ### Auto-generated documentation:
 

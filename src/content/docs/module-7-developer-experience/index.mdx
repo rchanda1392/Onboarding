@@ -22,6 +22,26 @@ This is where the rubber meets the road: how do you take everything from Modules
 
 ### The three dimensions of DevEx (from research):
 
+```mermaid
+mindmap
+  root((Developer\nExperience))
+    Feedback Loops
+      Build time
+      Test speed
+      Deploy frequency
+      How fast do I know if it works?
+    Cognitive Load
+      API complexity
+      Docs quality
+      Error clarity
+      How much mental effort?
+    Flow State
+      Interruptions
+      Context switching
+      Tool friction
+      Can I stay focused?
+```
+
 Recent research from the DevEx research community identifies three core dimensions:
 
 1. **Feedback loops**: How quickly developers get feedback on their work. Fast compile times, instant test results, real-time monitoring — all reduce the feedback loop. For observability: how quickly can an engineer see the health of their pipeline after deploying a change?
@@ -52,6 +72,15 @@ Google engineers have access to world-class internal tools. If your observabilit
 ## Section 2: IDE Integration Patterns — VS Code Extensions, JetBrains Plugins
 
 The IDE is where developers spend most of their working hours. Bringing observability data into the IDE — rather than requiring developers to leave it — is the single highest-impact integration you can build.
+
+```mermaid
+graph TB
+    IDE["IDE\nVS Code / JetBrains / Cider"]
+    EXT["Extension / Plugin\nInline health · Hover info · Quick actions"]
+    API["API Layer\nREST / gRPC"]
+    OBS["Observability Platform\nMetrics · Alerts · Lineage"]
+    IDE --> EXT --> API --> OBS
+```
 
 ### What IDE integration looks like for observability:
 
@@ -102,6 +131,17 @@ A well-designed CLI lets developers:
 
 **Shift-left observability** means catching data quality issues earlier in the development process — ideally before code is merged, not after it's deployed to production.
 
+```mermaid
+graph LR
+    CD["Code"] --> PC["Pre-commit\nData quality checks"]
+    PC --> PR["PR Review\nSchema validation"]
+    PR --> CI["CI Pipeline\nIntegration tests"]
+    CI --> DP["Deploy"]
+    DP --> MO["Post-deploy\nMonitoring"]
+    SL["Shift Left: Catch issues earlier <<<"] -.- PC
+    SL -.- PR
+```
+
 Patterns for CI/CD observability:
 - **Pre-merge checks**: Automatically validate that schema changes won't break downstream consumers. Run this as a CI check on pull requests.
 - **Post-deploy validation**: After a pipeline change is deployed, automatically run observability checks to verify the change didn't introduce regressions.
@@ -125,6 +165,16 @@ Traditional observability is reactive — you monitor production and respond to 
 ## Section 4: How Developer Tools Companies Embed in Workflows
 
 The most successful developer tools don't ask developers to change their workflows — they embed themselves into existing ones. Here's how the best companies do it:
+
+```mermaid
+graph TB
+    AW["Awareness\nDocs, talks, demos"]
+    TR["Trial\nEasy setup, quick wins"]
+    INT["Integration\nFits existing workflow"]
+    HAB["Habit\nDaily use, muscle memory"]
+    ADV["Advocacy\nRecommends to others"]
+    AW --> TR --> INT --> HAB --> ADV
+```
 
 ### Pattern 1: Meet developers where they are
 Datadog, Sentry, and LaunchDarkly all provide IDE extensions, CLI tools, browser extensions, and Slack integrations. The strategy: be available in every tool the developer already uses, so they never need to "go to" the observability tool.
